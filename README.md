@@ -42,6 +42,11 @@ Aplikasi ini membedakan secara tegas antara **Aset Tetap** (Laptop, Proyektor, K
 * Cetak laporan otomatis ke format **PDF**.
 * Laporan Aset per Ruangan, Laporan Sisa Stok BHP, dan Laporan Peminjaman Aktif.
 
+### 7. 🏗️ Peningkatan Arsitektur & Kualitas Kode (v2.0)
+* **PHP Enums:** Menggantikan *magic strings* untuk status dan kondisi aset, meminimalisir *typo* dan meningkatkan keamanan tipe data.
+* **Database Agnostic:** Menggunakan standar SQL universal (`CASE WHEN`) untuk sorting, memastikan kompatibilitas dengan MySQL, PostgreSQL, dan SQLite.
+* **Fat Model, Skinny Controller:** Logika bisnis (validasi peminjaman) dipusatkan di Model, membuat Controller lebih bersih dan mudah dibaca.
+
 ---
 
 ## 🛠️ Teknologi yang Digunakan
