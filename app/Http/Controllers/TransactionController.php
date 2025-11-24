@@ -22,50 +22,69 @@ class TransactionController extends Controller
         return view('pages.transactions.index', compact('transactions'));
     }
 
-    // FORM BARANG KELUAR
     public function create()
     {
-        // Ambil barang yang stoknya > 0 saja
-        $consumables = Consumable::with(['details' => function($q) {
+        // Ambil Consumable (Induk) yang punya setidaknya satu batch dengan stok > 0
+        $consumables = Consumable::whereHas('details', function($q) {
             $q->where('current_stock', '>', 0);
-        }])->get();
+        })->with('details')->get();
 
         return view('pages.transactions.create', compact('consumables'));
     }
 
-    // PROSES SIMPAN BARANG KELUAR
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $request->validate([
-            'consumable_detail_id' => 'required|exists:consumable_details,id',
+            'consumable_id' => 'required|exists:consumables,id', // Validasi ke Induk, bukan batch
             'amount' => 'required|integer|min:1',
             'date' => 'required|date',
             'notes' => 'required|string',
         ]);
 
-        $batch = ConsumableDetail::findOrFail($request->consumable_detail_id);
+        // 1. Ambil Barang Induk beserta Batch-nya
+        // PENTING: Urutkan batch berdasarkan tanggal kedatangan (oldest) atau expired (asc)
+        // Disini kita pakai Logika FIFO murni (created_at terlama keluar duluan)
+        $item = Consumable::with(['details' => function($q) {
+            $q->where('current_stock', '>', 0)->orderBy('created_at', 'asc');
+        }])->findOrFail($request->consumable_id);
 
-        // 1. CEK STOK CUKUP GAK?
-        if ($batch->current_stock < $request->amount) {
-            return back()->withErrors(['amount' => "Stok tidak cukup! Sisa stok batch ini hanya: {$batch->current_stock}"]);
+        // 2. Validasi Stok Total
+        $totalAvailable = $item->details->sum('current_stock');
+        if ($totalAvailable < $request->amount) {
+            return back()->withErrors(['amount' => "Stok tidak cukup! Total tersedia: $totalAvailable, Permintaan: {$request->amount}"]);
         }
 
-        // GUNAKAN DB TRANSACTION (Agar data aman)
-        DB::transaction(function () use ($request, $batch) {
-            // A. Kurangi Stok di Tabel Master
-            $batch->decrement('current_stock', $request->amount);
+        // 3. ALGORITMA FIFO (The Core Logic)
+        DB::transaction(function () use ($request, $item) {
+            
+            $sisaPermintaan = $request->amount; // Misal butuh 10
 
-            // B. Catat di Riwayat Transaksi (Log)
-            Transaction::create([
-                'user_id' => Auth::id(),
-                'consumable_detail_id' => $batch->id,
-                'type' => 'keluar',
-                'amount' => $request->amount,
-                'date' => $request->date,
-                'notes' => $request->notes,
-            ]);
+            foreach ($item->details as $batch) {
+                // Jika permintaan sudah terpenuhi, stop looping
+                if ($sisaPermintaan <= 0) break;
+
+                // Cek berapa yang bisa diambil dari batch ini
+                // Ambil yang lebih kecil: Sisa Stok Batch atau Sisa Permintaan
+                $ambil = min($batch->current_stock, $sisaPermintaan);
+
+                // A. Kurangi Stok Batch
+                $batch->decrement('current_stock', $ambil);
+
+                // B. Catat Transaksi per Batch (Agar Audit Trail jelas)
+                Transaction::create([
+                    'user_id' => Auth::id(),
+                    'consumable_detail_id' => $batch->id, // ID Batch Spesifik
+                    'type' => 'keluar',
+                    'amount' => $ambil,
+                    'date' => $request->date,
+                    'notes' => $request->notes . " (Auto FIFO)",
+                ]);
+
+                // Kurangi sisa permintaan
+                $sisaPermintaan -= $ambil;
+            }
         });
 
-        return redirect()->route('transaksi.index')->with('success', 'Barang keluar berhasil dicatat. Stok berkurang.');
+        return redirect()->route('transaksi.index')->with('success', 'Transaksi berhasil. Stok dikurangi menggunakan metode FIFO.');
     }
 }

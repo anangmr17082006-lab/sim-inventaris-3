@@ -68,43 +68,55 @@ class ConsumableController extends Controller
     // SIMPAN DETAIL BATCH
     public function storeDetail(Request $request)
     {
-        // Validasi
         $request->validate([
             'consumable_id' => 'required',
-            'model_name' => 'required', // Merk
+            'model_name' => 'required',
             'initial_stock' => 'required|integer|min:1',
-            'expiry_date' => 'nullable|date',
             'funding_source_id' => 'required',
-            // ... validasi lain sesuaikan
-            
+            // ... validasi lain
         ]);
 
-        // LOGIKA GENERATE KODE (BHP/SUMBER/ID/001)
+        // 1. Ambil Data Pendukung
         $consumable = Consumable::findOrFail($request->consumable_id);
         $sumber = FundingSource::findOrFail($request->funding_source_id);
         
-        $count = ConsumableDetail::where('consumable_id', $consumable->id)->count() + 1;
-        $sequence = str_pad($count, 3, '0', STR_PAD_LEFT);
+        // 2. LOGIKA ANTI-BENTROK (COLLISION RESOLUTION)
+        // Mulai hitungan dari jumlah yang ada + 1
+        $counter = ConsumableDetail::where('consumable_id', $consumable->id)->count() + 1;
         
-        $code = "BHP/" . $sumber->code . "/" . $consumable->category_id . "/" . $sequence;
+        do {
+            // Format angka jadi 3 digit (001, 002...)
+            $sequence = str_pad($counter, 3, '0', STR_PAD_LEFT);
+            
+            // Rakit Kode Calon
+            $code = "BHP/" . $sumber->code . "/" . $consumable->category_id . "/" . $sequence;
+            
+            // Cek ke database: Apakah kode ini sudah ada?
+            $exists = ConsumableDetail::where('batch_code', $code)->exists();
+            
+            if ($exists) {
+                // Jika sudah ada, naikkan hitungan dan coba lagi (Looping)
+                $counter++;
+            }
+            
+        } while ($exists); // Ulangi terus sampai $exists bernilai false (kode belum terpakai)
 
-        // Simpan Batch Baru (Stok Saat Ini = Stok Awal)
+        // 3. Simpan dengan Kode yang Dijamin Aman
         $batch = ConsumableDetail::create(array_merge($request->all(), [
             'batch_code' => $code,
             'current_stock' => $request->initial_stock
         ]));
 
-        // --- TAMBAHAN BARU: CATAT KE TABEL TRANSAKSI (TYPE: MASUK) ---
-        Transaction::create([
-            'user_id' => Auth::id(),
+        // 4. Catat Transaksi Masuk
+        \App\Models\Transaction::create([
+            'user_id' => \Illuminate\Support\Facades\Auth::id(),
             'consumable_detail_id' => $batch->id,
-            'type' => 'masuk', // <--- INI PENTING
+            'type' => 'masuk',
             'amount' => $request->initial_stock,
             'date' => now(),
             'notes' => 'Stok Awal / Pembelian Baru',
         ]);
-        // --------------------------------------------------------------
 
-        return back()->with('success', 'Batch berhasil ditambahkan & Transaksi Masuk tercatat. Kode: ' . $code);
+        return back()->with('success', 'Batch berhasil ditambahkan. Kode: ' . $code);
     }
 }
