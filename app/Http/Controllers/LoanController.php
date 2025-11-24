@@ -39,7 +39,7 @@ class LoanController extends Controller
     }
 
     // 3. PROSES PINJAM (Action)
-   public function store(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'asset_detail_id' => 'required',
@@ -51,9 +51,14 @@ class LoanController extends Controller
 
         $asset = AssetDetail::findOrFail($request->asset_detail_id);
 
-        // Cek Status Ketersediaan
+        // 1. Cek Status Ketersediaan
         if ($asset->status != 'tersedia') {
-            return back()->withErrors(['asset' => 'Barang ini sedang tidak tersedia (Status: ' . ucfirst($asset->status) . ')']);
+            return back()->withErrors(['msg' => 'Gagal! Barang ini sedang dipinjam orang lain.']);
+        }
+
+        // 2. Cek Kondisi Fisik (TAMBAHAN PENTING)
+        if ($asset->condition == 'rusak_berat') {
+            return back()->withErrors(['msg' => 'Gagal! Barang rusak berat tidak boleh dipinjam.']);
         }
 
         DB::transaction(function () use ($request, $asset) {
