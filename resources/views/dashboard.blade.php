@@ -42,7 +42,19 @@
                     <div class="text-xs text-gray-400 mt-1">{{ date('d M Y H:i') }}</div>
                 </div>
             </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm md:col-span-2">
+                    <h3 class="font-bold text-gray-700 mb-4">Tren Peminjaman Tahun {{ date('Y') }}</h3>
+                    <div id="chart-loans"></div>
+                </div>
 
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="font-bold text-gray-700 mb-4">Kondisi Fisik Aset</h3>
+                     <div id="chart-condition"></div>
+                </div>
+
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 <div class="bg-white shadow-sm sm:rounded-lg p-6">
@@ -132,6 +144,68 @@
                 </div>
 
             </div>
-        </div>
+            </div>
     </div>
-</x-app-layout>
+    
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+        // --- Grafik 1: Tren Peminjaman (Area Chart) ---
+        var optionsLoans = {
+            series: [{
+                name: 'Jumlah Peminjaman',
+                data: @json($chartLoans) // Data dari Controller
+            }],
+            chart: {
+                height: 300,
+                type: 'area',
+                toolbar: { show: false }
+            },
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth' },
+            xaxis: {
+                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+            },
+            colors: ['#3b82f6'],
+            fill: {
+                type: "gradient",
+                gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9, stops: [0, 90, 100] }
+            },
+            grid: {
+                borderColor: '#f1f1f1'
+            }
+        };
+        
+        // Render Grafik 1 jika elemennya ada
+        if(document.querySelector("#chart-loans")) {
+            var chart1 = new ApexCharts(document.querySelector("#chart-loans"), optionsLoans);
+            chart1.render();
+        }
+
+        // --- Grafik 2: Kondisi Aset (Donut Chart) ---
+        var optionsCondition = {
+            series: @json($chartCondition), // Data [Baik, Ringan, Berat]
+            chart: {
+                type: 'donut',
+                height: 320
+            },
+            labels: ['Baik', 'Rusak Ringan', 'Rusak Berat'],
+            colors: ['#22c55e', '#eab308', '#ef4444'], 
+            legend: { position: 'bottom' },
+            dataLabels: { enabled: true },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '65%'
+                    }
+                }
+            }
+        };
+
+        // Render Grafik 2 jika elemennya ada
+        if(document.querySelector("#chart-condition")) {
+            var chart2 = new ApexCharts(document.querySelector("#chart-condition"), optionsCondition);
+            chart2.render();
+        }
+    </script>
+    </x-app-layout>

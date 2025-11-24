@@ -34,9 +34,34 @@ class RoomController extends Controller
         return redirect()->route('ruangan.index')->with('success', 'Ruangan berhasil ditambahkan.');
     }
 
-    public function edit(Room $room)
+    // MENAMPILKAN DETAIL ISI RUANGAN
+    public function show(Room $ruangan)
     {
+        // Ambil Data Aset Tetap di ruangan ini
+        $assets = $ruangan->assets()
+                  ->with(['inventory.category', 'fundingSource']) // Load data induknya
+                  ->latest()
+                  ->get();
+
+        // Ambil Data BHP di ruangan ini (yang stoknya masih ada)
+        $consumables = $ruangan->consumables()
+                       ->with(['consumable', 'fundingSource'])
+                       ->where('current_stock', '>', 0)
+                       ->latest()
+                       ->get();
+
+        return view('pages.rooms.show', compact('ruangan', 'assets', 'consumables'));
+    }
+
+   public function edit($id)
+    {
+        // 1. Cari data ruangan berdasarkan ID
+        $room = Room::findOrFail($id);
+        
+        // 2. Ambil data unit untuk dropdown
         $units = Unit::where('status', 'aktif')->get();
+
+        // 3. Kirim ke View dengan nama variabel 'room' (BUKAN 'ruangan')
         return view('pages.rooms.edit', compact('room', 'units'));
     }
 

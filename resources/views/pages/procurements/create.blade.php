@@ -7,9 +7,12 @@
                     @csrf
                     
                     <div class="mb-4">
-                        <label class="block font-bold text-sm mb-1">Nama Pengusul</label>
-                        <input type="text" name="requestor_name" class="w-full border-gray-300 rounded" placeholder="Nama Dosen / Staff / Unit" required>
-                    </div>
+                    <label class="block font-bold text-sm mb-1">Nama Pengusul</label>
+                    <input type="text" name="requestor_name" 
+                        class="w-full border-gray-300 rounded bg-gray-100 cursor-not-allowed" 
+                        value="{{ Auth::user()->name }}" 
+                        readonly>
+                </div>
 
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>

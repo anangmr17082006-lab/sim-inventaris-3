@@ -35,7 +35,9 @@
                                 </td>
                                 <td class="px-6 py-4 flex gap-2">
                                     <a href="{{ route('ruangan.edit', $room->id) }}" class="text-blue-600 hover:underline">Edit</a>
-                                    
+                                    <a href="{{ route('ruangan.show', $room->id) }}" class="text-green-600 hover:underline mr-2 font-bold">
+    👁️ Lihat Isi
+</a>
                                     <form action="{{ route('ruangan.destroy', $room->id) }}" method="POST" onsubmit="return confirm('Yakin hapus data ini?');">
                                         @csrf
                                         @method('DELETE')

@@ -54,10 +54,14 @@ class ProcurementController extends Controller
         return back()->with('success', 'Status pengajuan diperbarui.');
     }
 
-    // 5. HAPUS (Jika salah input)
-    public function destroy(Procurement $procurement)
+    // HAPUS DATA (Revisi Manual ID)
+    public function destroy($id)
     {
+        // Cari manual berdasarkan ID, kalau tidak ketemu error 404
+        $procurement = Procurement::findOrFail($id);
+        
         $procurement->delete();
-        return back()->with('success', 'Data pengajuan dihapus.');
+        
+        return back()->with('success', 'Data pengajuan berhasil dihapus.');
     }
 }
