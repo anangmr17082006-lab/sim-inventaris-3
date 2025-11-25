@@ -21,16 +21,25 @@ class InventoryController extends Controller
             ->withCount([
                 'details as total_unit', // Total semua unit
                 'details as baik' => function ($q) {
-                    $q->where('condition', \App\Enums\AssetCondition::BAIK->value); },
+                    $q->where('condition', \App\Enums\AssetCondition::BAIK->value);
+                },
                 'details as rusak_ringan' => function ($q) {
-                    $q->where('condition', \App\Enums\AssetCondition::RUSAK_RINGAN->value); },
+                    $q->where('condition', \App\Enums\AssetCondition::RUSAK_RINGAN->value);
+                },
                 'details as rusak_berat' => function ($q) {
-                    $q->where('condition', \App\Enums\AssetCondition::RUSAK_BERAT->value); }
+                    $q->where('condition', \App\Enums\AssetCondition::RUSAK_BERAT->value);
+                }
             ])
             ->latest()
             ->get();
 
         return view('pages.inventories.items', compact('category', 'items'));
+    }
+
+    // Halaman 3: Form Tambah Barang
+    public function create(Category $category)
+    {
+        return view('pages.inventories.create', compact('category'));
     }
 
     // Simpan Barang Induk (HANYA NAMA & KET)
@@ -48,5 +57,27 @@ class InventoryController extends Controller
         // 2. REDIRECT LANGSUNG ke halaman Detail Unit (asset.index)
         return redirect()->route('asset.index', $inventory->id)
             ->with('success', 'Barang induk dibuat. Silakan input unit fisiknya di bawah ini.');
+    }
+
+    // HALAMAN EDIT (Form)
+    public function edit(Inventory $inventaris)
+    {
+        $categories = Category::all();
+        return view('pages.inventories.edit', compact('inventaris', 'categories'));
+    }
+
+    // PROSES UPDATE
+    public function update(Request $request, Inventory $inventaris)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'category_id' => 'required',
+            'description' => 'nullable|string'
+        ]);
+
+        $inventaris->update($request->all());
+
+        return redirect()->route('inventaris.items', $inventaris->category_id)
+            ->with('success', 'Data aset berhasil diperbarui.');
     }
 }

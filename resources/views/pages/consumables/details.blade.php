@@ -1,90 +1,84 @@
 <x-app-layout>
-    <x-slot name="header">Kelola Stok: {{ $consumable->name }} (Satuan: {{ $consumable->unit }})</x-slot>
+    <x-slot name="header">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-slate-500">BHP /</span>
+                <span class="text-slate-500">{{ $consumable->name }} /</span>
+                <span class="text-slate-800">Kelola Stok</span>
+            </div>
+            <a href="{{ route('bhp.items', $consumable->category_id) }}"
+                class="text-sm text-slate-500 hover:text-slate-700 transition-colors">
+                &larr; Kembali ke Daftar
+            </a>
+        </div>
+    </x-slot>
+
     <div class="py-12">
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
-            
-            <div class="bg-white p-6 rounded shadow mb-6 border-t-4 border-green-500">
-                <h4 class="font-bold mb-4">Input Stok Masuk (Batch Baru)</h4>
-                <form action="{{ route('consumable.storeDetail') }}" method="POST" class="grid grid-cols-4 gap-4">
-                    @csrf
-                    <input type="hidden" name="consumable_id" value="{{ $consumable->id }}">
-                    
-                    <div>
-                        <label class="font-bold text-xs">Merk / Tipe</label>
-                        <input type="text" name="model_name" class="w-full border-gray-300 rounded text-sm" required>
-                    </div>
-                    <div>
-                        <label class="font-bold text-xs">Jumlah Masuk</label>
-                        <input type="number" name="initial_stock" class="w-full border-gray-300 rounded text-sm" required>
-                    </div>
-                    <div>
-                        <label class="font-bold text-xs">Tgl Kadaluarsa</label>
-                        <input type="date" name="expiry_date" class="w-full border-gray-300 rounded text-sm">
-                    </div>
-                    <div>
-                       <label class="font-bold text-xs">Sumber Dana</label>
-    <select name="funding_source_id" class="w-full border-gray-300 rounded text-sm bg-yellow-50 focus:ring-blue-500" required>
-        <option value="">-- Pilih Sumber --</option>
-        @foreach($fundings as $f)
-            <option value="{{ $f->id }}">{{ $f->name }}</option>
-        @endforeach
-    </select>
-                    </div>
 
-                    <div>
-                        <label class="font-bold text-xs">Lokasi Simpan</label>
-                        <select name="room_id" class="w-full border-gray-300 rounded text-sm" required>
-                            @foreach($rooms as $r)
-                                <option value="{{ $r->id }}">{{ $r->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="font-bold text-xs">Tgl Pengecekan</label>
-                        <input type="date" name="check_date" class="w-full border-gray-300 rounded text-sm">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="font-bold text-xs">Keterangan</label>
-                        <input type="text" name="notes" class="w-full border-gray-300 rounded text-sm">
-                    </div>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-800">Riwayat Batch Kedatangan</h3>
+                    <p class="text-slate-500 mt-1">Kelola stok masuk, kadaluarsa, dan lokasi penyimpanan untuk <span
+                            class="font-bold text-slate-700">{{ $consumable->name }}</span>.</p>
+                </div>
 
-                    <div class="col-span-4 flex justify-end">
-                        <button class="bg-green-600 text-white px-6 py-2 rounded font-bold">+ Tambah Stok</button>
-                    </div>
-                </form>
+                <a href="{{ route('consumable.createBatch', $consumable->id) }}"
+                    class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Tambah Stok Baru
+                </a>
             </div>
 
-            <div class="bg-white shadow overflow-hidden rounded">
-                <table class="w-full text-xs text-left text-gray-600">
-                    <thead class="bg-gray-100 uppercase font-bold text-gray-700">
-                        <tr>
-                            <th class="px-4 py-3">Kode Batch</th>
-                            <th class="px-4 py-3">Merk</th>
-                            <th class="px-4 py-3">Stok Awal</th>
-                            <th class="px-4 py-3 text-green-700">Sisa Stok</th>
-                            <th class="px-4 py-3 text-red-600">Kadaluarsa</th>
-                            <th class="px-4 py-3">Lokasi</th>
-                            <th class="px-4 py-3">Sumber Dana</th>
-                            <th class="px-4 py-3">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($details as $d)
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="px-4 py-3 font-bold text-blue-600">{{ $d->batch_code }}</td>
-                            <td class="px-4 py-3">{{ $d->model_name }}</td>
-                            <td class="px-4 py-3">{{ $d->initial_stock }}</td>
-                            <td class="px-4 py-3 font-bold text-green-700 text-sm">{{ $d->current_stock }}</td>
-                            <td class="px-4 py-3 text-red-600">{{ $d->expiry_date ?? '-' }}</td>
-                            <td class="px-4 py-3">{{ $d->room->name }}</td>
-                            <td class="px-4 py-3">{{ $d->fundingSource->name }}</td>
-                            <td class="px-4 py-3">
-                                <button class="text-red-600 hover:underline">Hapus</button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <div class="bg-white shadow-sm rounded-xl border border-slate-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-500">
+                        <thead class="bg-slate-50 uppercase font-bold text-slate-700 border-b border-slate-100 text-xs">
+                            <tr>
+                                <th class="px-6 py-4">Kode Batch</th>
+                                <th class="px-6 py-4">Merk</th>
+                                <th class="px-6 py-4">Stok Awal</th>
+                                <th class="px-6 py-4 text-emerald-600">Sisa Stok</th>
+                                <th class="px-6 py-4 text-rose-600">Kadaluarsa</th>
+                                <th class="px-6 py-4">Lokasi</th>
+                                <th class="px-6 py-4">Sumber Dana</th>
+                                <th class="px-6 py-4 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($details as $d)
+                                <tr class="bg-white hover:bg-slate-50 transition-colors">
+                                    <td class="px-6 py-4 font-bold text-indigo-600 font-mono">{{ $d->batch_code }}</td>
+                                    <td class="px-6 py-4 font-medium text-slate-800">{{ $d->model_name }}</td>
+                                    <td class="px-6 py-4 text-slate-600">{{ $d->initial_stock }}</td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="bg-emerald-100 text-emerald-700 text-sm font-bold px-3 py-1 rounded-full border border-emerald-200">
+                                            {{ $d->current_stock }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($d->expiry_date)
+                                            <span
+                                                class="text-rose-600 font-bold bg-rose-50 px-2 py-1 rounded border border-rose-100">{{ $d->expiry_date }}</span>
+                                        @else
+                                            <span class="text-slate-400">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-slate-600">{{ $d->room->name }}</td>
+                                    <td class="px-6 py-4 text-slate-600">{{ $d->fundingSource->name }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button
+                                            class="text-rose-500 hover:text-rose-700 font-medium hover:underline transition-colors">Hapus</button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>

@@ -53,11 +53,21 @@ class UnitController extends Controller
     public function destroy(Unit $unit)
     {
         // Cek apakah unit masih punya ruangan? Jika ya, jangan hapus sembarangan (Opsional, tapi aman)
-        if($unit->rooms()->exists()){
+        if ($unit->rooms()->exists()) {
             return back()->withErrors(['Gagal menghapus! Unit ini masih memiliki Ruangan terdaftar.']);
         }
-        
+
         $unit->delete();
         return redirect()->route('unit.index')->with('success', 'Unit berhasil dihapus.');
+    }
+
+    // MENAMPILKAN DETAIL UNIT & DAFTAR RUANGANNYA
+    public function show(Unit $unit)
+    {
+        // Ambil data ruangan milik unit ini
+        // Kita urutkan berdasarkan nama ruangan biar rapi
+        $rooms = $unit->rooms()->orderBy('name')->get();
+
+        return view('pages.units.show', compact('unit', 'rooms'));
     }
 }
