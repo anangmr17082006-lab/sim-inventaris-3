@@ -1,83 +1,119 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\Category;
 use App\Models\Inventory;
 use Illuminate\Http\Request;
+use App\Enums\AssetCondition; // Pastikan namespace Enum ini benar
 
 class InventoryController extends Controller
 {
-    // Halaman 1: Tampilkan 9 Kategori
+    // 1. HALAMAN KATEGORI (Dashboard Aset)
     public function indexCategories()
     {
-        $categories = Category::all();
+        // Saya tambahkan withCount agar Kartu Kategori di View menampilkan angka statistik
+        // Asumsi: Relasi 'inventories' ada di model Category
+        $categories = Category::withCount(['inventories as total_types', 'assets as total_units'])
+                      ->get();
+
         return view('pages.inventories.categories', compact('categories'));
     }
 
-    // Halaman 2: Tabel Barang dengan STATISTIK REAL-TIME
-    public function indexItems(Category $category)
+    // 2. DAFTAR BARANG (Dengan Filter & Pagination)
+    public function indexItems(Request $request, Category $category)
     {
-        // Kita hitung jumlah anak berdasarkan kondisinya masing-masing
-        $items = Inventory::where('category_id', $category->id)
+        $search = $request->input('search');
+
+        // Query Utama
+        $query = Inventory::where('category_id', $category->id)
             ->withCount([
-                'details as total_unit', // Total semua unit
+                'details as total_unit', 
+                // Hitung kondisi aset secara efisien
                 'details as baik' => function ($q) {
-                    $q->where('condition', \App\Enums\AssetCondition::BAIK->value);
+                    $q->where('condition', 'baik'); // Sesuaikan string jika tidak pakai Enum
                 },
                 'details as rusak_ringan' => function ($q) {
-                    $q->where('condition', \App\Enums\AssetCondition::RUSAK_RINGAN->value);
+                    $q->where('condition', 'rusak-ringan');
                 },
                 'details as rusak_berat' => function ($q) {
-                    $q->where('condition', \App\Enums\AssetCondition::RUSAK_BERAT->value);
+                    $q->where('condition', 'rusak-berat');
                 }
-            ])
-            ->latest()
-            ->get();
+            ]);
+
+        // LOGIKA SEARCH (Ini yang kamu lupakan!)
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Pagination wajib ada
+        $items = $query->latest()->paginate(10);
 
         return view('pages.inventories.items', compact('category', 'items'));
     }
 
-    // Halaman 3: Form Tambah Barang
+    // 3. FORM TAMBAH BARANG
     public function create(Category $category)
     {
         return view('pages.inventories.create', compact('category'));
     }
 
-    // Simpan Barang Induk (HANYA NAMA & KET)
+    // 4. SIMPAN BARANG
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'description' => 'nullable|string'
+            'description' => 'nullable|string',
+            'brand' => 'nullable|string', // Tambahan field umum
         ]);
 
-        // 1. Simpan ke variabel $inventory agar kita dapat ID-nya
-        $inventory = Inventory::create($request->only(['name', 'category_id', 'description']));
+        $inventory = Inventory::create($request->all());
 
-        // 2. REDIRECT LANGSUNG ke halaman Detail Unit (asset.index)
+        // UX Bagus dari kamu: Langsung redirect ke input unit fisik
         return redirect()->route('asset.index', $inventory->id)
-            ->with('success', 'Barang induk dibuat. Silakan input unit fisiknya di bawah ini.');
+            ->with('success', 'Data induk berhasil dibuat. Silakan tambahkan unit fisik.');
     }
 
-    // HALAMAN EDIT (Form)
+    // 5. EDIT FORM
     public function edit(Inventory $inventaris)
     {
+        // Pakai Route Model Binding yang konsisten
         $categories = Category::all();
         return view('pages.inventories.edit', compact('inventaris', 'categories'));
     }
 
-    // PROSES UPDATE
+    // 6. UPDATE DATA
     public function update(Request $request, Inventory $inventaris)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'category_id' => 'required',
-            'description' => 'nullable|string'
+            'category_id' => 'required|exists:categories,id',
+            'description' => 'nullable|string',
+            'brand' => 'nullable|string',
         ]);
 
         $inventaris->update($request->all());
 
         return redirect()->route('inventaris.items', $inventaris->category_id)
             ->with('success', 'Data aset berhasil diperbarui.');
+    }
+
+    // 7. DESTROY (Wajib ada untuk kebersihan data)
+    public function destroy(Inventory $inventaris)
+    {
+        // Cek relasi anak sebelum hapus
+        if ($inventaris->details()->exists()) {
+            return back()->withErrors(['Gagal hapus! Barang ini masih memiliki unit fisik terdaftar. Hapus unitnya dulu.']);
+        }
+
+        $categoryId = $inventaris->category_id;
+        $inventaris->delete();
+
+        return redirect()->route('inventaris.items', $categoryId)
+            ->with('success', 'Data induk barang dihapus.');
     }
 }

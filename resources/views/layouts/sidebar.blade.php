@@ -1,14 +1,18 @@
 <aside
-   class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-slate-900 border-r border-slate-800"
+   class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-slate-900 border-r border-slate-800 flex flex-col"
    aria-label="Sidebar">
-   <div class="h-full px-3 py-4 overflow-y-auto bg-slate-900 custom-scrollbar">
-      <div class="mb-8 px-4 flex items-center gap-3">
-         <div class="h-8 w-8 rounded bg-indigo-500 flex items-center justify-center text-white font-bold text-lg">
+
+   <div class="shrink-0 px-6 py-6 bg-slate-900 z-10">
+      <div class="flex items-center gap-3">
+         <div
+            class="h-8 w-8 rounded bg-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/20">
             S
          </div>
          <span class="self-center text-xl font-bold whitespace-nowrap text-white tracking-tight">SIM INVENTARIS</span>
       </div>
+   </div>
 
+   <div class="flex-1 px-3 pb-4 overflow-y-auto custom-scrollbar">
       <ul class="space-y-1 font-medium">
          <li>
             <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')"

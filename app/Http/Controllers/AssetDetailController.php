@@ -1,93 +1,100 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\AssetDetail;
 use App\Models\Inventory;
+use App\Models\Room;
 use App\Models\FundingSource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AssetDetailController extends Controller
 {
-    // Halaman 3: Tabel Detail Unit (Acer, Asus, dll)
-    public function index(Inventory $inventory)
+    // 1. HALAMAN INDEX (CUMA TABEL, BERSIH)
+    public function index(Request $request, Inventory $inventory)
     {
-        // Load data master untuk dropdown form
-        $rooms = \App\Models\Room::with('unit')->get();
-        $fundings = \App\Models\FundingSource::all();
+        // Kita TIDAK BUTUH $rooms dan $fundings di sini lagi karena formnya pindah
+        
+        $query = $inventory->details()->with(['room', 'fundingSource']);
 
-        // Ambil list unit milik barang ini
-        // Ganti latest() menjadi oldest()
-        $details = $inventory->details()->with(['room', 'fundingSource'])->oldest()->get();
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('unit_code', 'like', "%$search%")
+                  ->orWhere('model_name', 'like', "%$search%")
+                  ->orWhereHas('room', function($subQ) use ($search) {
+                      $subQ->where('name', 'like', "%$search%");
+                  });
+            });
+        }
 
-        return view('pages.inventories.details', compact('inventory', 'details', 'rooms', 'fundings'));
+        $details = $query->latest()->paginate(10);
+
+        return view('pages.assets.index', compact('inventory', 'details'));
     }
 
+    // 2. HALAMAN CREATE (KHUSUS FORM) - BARU
+    public function create(Inventory $inventory)
+    {
+        // Data pendukung dropdown pindah ke sini
+        $rooms = Room::orderBy('name')->get();
+        $fundings = FundingSource::orderBy('name')->get();
+
+        return view('pages.assets.create', compact('inventory', 'rooms', 'fundings'));
+    }
+
+    // 3. STORE (SAMA SAJA, Cuma Redirect-nya perlu diperhatikan)
     public function store(Request $request)
     {
+        // ... (Validasi SAMA SEPERTI SEBELUMNYA, copy paste aja logic store kamu) ...
         $request->validate([
-            'inventory_id' => 'required',
-            'model_name' => 'required',
-            'room_id' => 'required',
-            'funding_source_id' => 'required',
+            'inventory_id' => 'required|exists:inventories,id',
+            'model_name' => 'required|string|max:255',
+            'room_id' => 'required|exists:rooms,id',
+            'funding_source_id' => 'required|exists:funding_sources,id',
             'condition' => 'required',
             'price' => 'nullable|numeric',
             'purchase_date' => 'nullable|date',
-            'repair_date' => 'nullable|date',
-            'check_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 
-        // 1. AMBIL DATA PENDUKUNG
-        // Kita butuh data Induk untuk tahu Category ID-nya
         $inventory = Inventory::findOrFail($request->inventory_id);
-
-        // Kita butuh Kode Sumber Dana (misal: BOS, YYS)
         $sumber = FundingSource::findOrFail($request->funding_source_id);
 
-        // 2. LOGIKA NOMOR URUT (001, 002, dst)
-        // Hitung berapa unit yang SUDAH ADA di inventaris induk ini
-        $jumlahUnitSaatIni = AssetDetail::where('inventory_id', $inventory->id)->count();
-
-        // Urutan selanjutnya = Jumlah sekarang + 1
-        $nomorUrut = $jumlahUnitSaatIni + 1;
-
-        // Format jadi 3 digit (1 jadi 001, 10 jadi 010)
-        $sequence = str_pad($nomorUrut, 3, '0', STR_PAD_LEFT);
-
-        // 3. RAKIT KODE UNIT (Sesuai Permintaan: INV / SUMBER / CAT_ID / 001)
+        $nextNumber = AssetDetail::where('inventory_id', $inventory->id)->count() + 1;
+        $sequence = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
         $generatedCode = "INV/" . $sumber->code . "/" . $inventory->category_id . "/" . $sequence;
 
-        // 4. SIMPAN DATA SEKALIGUS
-        // Kita merge request dengan array kode unit yang baru dibuat
-        AssetDetail::create(array_merge($request->all(), ['unit_code' => $generatedCode]));
+        if (AssetDetail::where('unit_code', $generatedCode)->exists()) {
+            $generatedCode .= "-" . strtoupper(Str::random(3));
+        }
 
-        return back()->with('success', 'Unit Aset berhasil ditambahkan. Kode: ' . $generatedCode);
-    }
-
-    public function edit(AssetDetail $assetDetail)
-    {
-        // Kita butuh data master, tapi HANYA UNTUK DISPLAY (Readonly)
-        return view('pages.inventories.edit_unit', compact('assetDetail'));
-    }
-
-    public function update(Request $request, AssetDetail $assetDetail)
-    {
-        // Validasi HANYA untuk field yang boleh diubah (Misal: Merk, Harga)
-        $request->validate([
-            'model_name' => 'required',
-            'price' => 'numeric',
-            'notes' => 'nullable'
+        AssetDetail::create([
+            'unit_code' => $generatedCode,
+            'status' => 'tersedia',
+            ...$request->all()
         ]);
 
-        // Update data (Status & Kondisi JANGAN DIUPDATE dari sini)
-        $assetDetail->update($request->only(['model_name', 'price', 'notes']));
-
-        return redirect()->route('asset.index', $assetDetail->inventory_id)
-            ->with('success', 'Data unit diperbarui (Status & Lokasi tidak berubah).');
+        // Redirect ke Index setelah simpan
+        return redirect()->route('asset.index', $inventory->id)
+            ->with('success', 'Unit berhasil ditambahkan. Kode: ' . $generatedCode);
     }
 
-    public function destroy(AssetDetail $assetDetail)
-    {
+    // ... Method edit, update, destroy biarkan sama
+    public function edit(AssetDetail $assetDetail) {
+        $rooms = Room::orderBy('name')->get();
+        $fundings = FundingSource::orderBy('name')->get();
+        return view('pages.assets.edit', compact('assetDetail', 'rooms', 'fundings'));
+    }
+
+    public function update(Request $request, AssetDetail $assetDetail) {
+        $assetDetail->update($request->all());
+        return redirect()->route('asset.index', $assetDetail->inventory_id)->with('success', 'Update berhasil.');
+    }
+
+    public function destroy(AssetDetail $assetDetail) {
         $assetDetail->delete();
-        return back()->with('success', 'Unit dihapus.');
+        return back()->with('success', 'Dihapus.');
     }
 }

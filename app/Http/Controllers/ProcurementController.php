@@ -4,14 +4,42 @@ namespace App\Http\Controllers;
 
 use App\Models\Procurement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // Wajib import ini untuk Auth::user()
 
 class ProcurementController extends Controller
 {
-    // 1. DAFTAR USULAN
-    public function index()
+    // 1. DAFTAR USULAN (DENGAN FILTER & SECURITY)
+    public function index(Request $request)
     {
-        // Urutkan dari yang terbaru
-        $requests = Procurement::latest()->paginate(10);
+        $search = $request->input('search');
+        $status = $request->input('status');
+
+        // Mulai Query
+        $query = Procurement::query();
+
+        // A. Filter Search (Cari nama barang / pengusul / deskripsi)
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('item_name', 'like', "%{$search}%")
+                  ->orWhere('requestor_name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // B. Filter Status
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // C. Security Check: User biasa cuma boleh lihat usulan sendiri
+        // Asumsi kolom 'role' ada di tabel users. Jika tidak ada, hapus blok if ini.
+        if (Auth::user()->role != 'admin') {
+            $query->where('user_id', Auth::id());
+        }
+
+        // Urutkan & Paginate
+        $requests = $query->latest()->paginate(10);
+
         return view('pages.procurements.index', compact('requests'));
     }
 
@@ -25,43 +53,71 @@ class ProcurementController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'requestor_name' => 'required|string',
-            'item_name' => 'required|string',
+            'item_name' => 'required|string|max:255',
             'type' => 'required|in:asset,consumable',
             'quantity' => 'required|integer|min:1',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
+            'unit_price_estimation' => 'nullable|numeric', // Validasi harga
         ]);
 
-        Procurement::create($request->all());
+        // Simpan data dengan memaksa user_id dari sesi Login (Lebih Aman)
+        Procurement::create([
+            'user_id' => Auth::id(),
+            'requestor_name' => Auth::user()->name, // Ambil nama asli akun
+            'item_name' => $request->item_name,
+            'type' => $request->type,
+            'quantity' => $request->quantity,
+            'description' => $request->description,
+            'unit_price_estimation' => $request->unit_price_estimation,
+            'status' => 'pending',
+            'request_date' => now(),
+        ]);
 
-        return redirect()->route('pengadaan.index')->with('success', 'Usulan pengadaan berhasil dikirim ke Admin.');
+        return redirect()->route('pengadaan.index')->with('success', 'Usulan pengadaan berhasil dikirim.');
     }
 
-    // 4. UPDATE STATUS (Hanya Admin yang klik ini nanti)
+    // 4. UPDATE STATUS (ACC / TOLAK / SELESAI) - KHUSUS ADMIN
     public function updateStatus(Request $request, Procurement $procurement)
     {
-        // Validasi input status
+        // Cek apakah yang akses adalah Admin
+        if (Auth::user()->role != 'admin') {
+            abort(403, 'Anda tidak memiliki izin untuk memproses usulan ini.');
+        }
+
         $request->validate([
             'status' => 'required|in:approved,rejected,completed',
-            'admin_note' => 'nullable|string'
+            'admin_note' => 'nullable|string',
         ]);
 
         $procurement->update([
             'status' => $request->status,
-            'admin_note' => $request->admin_note
+            'admin_note' => $request->admin_note,
+            'response_date' => now(),
         ]);
 
-        return back()->with('success', 'Status pengajuan diperbarui.');
+        return back()->with('success', 'Status usulan diperbarui.');
     }
 
-    // HAPUS DATA (Revisi Manual ID)
-    public function destroy($id)
+    // 5. HAPUS DATA
+    public function destroy(Procurement $procurement)
     {
-        // Cari manual berdasarkan ID, kalau tidak ketemu error 404
-        $procurement = Procurement::findOrFail($id);
+        // Logika Keamanan:
+        // 1. Admin boleh hapus kapan saja (Opsional)
+        // 2. User cuma boleh hapus kalau status masih 'pending' DAN itu punya dia sendiri
         
+        $isOwner = $procurement->user_id == Auth::id();
+        $isAdmin = Auth::user()->role == 'admin';
+
+        if (!$isAdmin) {
+            if (!$isOwner) {
+                abort(403, 'Bukan milik Anda.');
+            }
+            if ($procurement->status != 'pending') {
+                return back()->withErrors(['Gagal! Usulan yang sudah diproses tidak bisa dihapus user.']);
+            }
+        }
+
         $procurement->delete();
-        
-        return back()->with('success', 'Data pengajuan berhasil dihapus.');
+        return back()->with('success', 'Usulan dihapus.');
     }
 }

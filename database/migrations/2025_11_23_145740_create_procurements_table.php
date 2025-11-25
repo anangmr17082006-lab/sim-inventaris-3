@@ -9,27 +9,25 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+ public function up()
 {
     Schema::create('procurements', function (Blueprint $table) {
         $table->id();
+        
+        // --- TAMBAHKAN BARIS INI ---
+        $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); 
+        // ---------------------------
 
-        // Siapa yang minta? (Bisa nama dosen/staff)
-        $table->string('requestor_name'); 
-
-        // Minta apa?
-        $table->string('item_name'); 
-        $table->enum('type', ['asset', 'consumable']); // Aset Tetap atau BHP?
-        $table->integer('quantity'); // Berapa banyak?
-        $table->text('description')->nullable(); // Spesifikasi/Alasan
-
-        // Status Alur
-        // Pending -> Diproses (Acc) -> Ditolak -> Selesai (Sudah beli & masuk gudang)
+        $table->string('requestor_name');
+        $table->string('item_name');
+        $table->enum('type', ['asset', 'consumable']);
+        $table->integer('quantity');
+        $table->text('description');
+        $table->decimal('unit_price_estimation', 15, 2)->nullable();
         $table->enum('status', ['pending', 'approved', 'rejected', 'completed'])->default('pending');
-
-        // Catatan Admin (Kenapa ditolak? atau Kapan estimasi beli?)
         $table->text('admin_note')->nullable();
-
+        $table->timestamp('request_date')->useCurrent();
+        $table->timestamp('response_date')->nullable();
         $table->timestamps();
     });
 }

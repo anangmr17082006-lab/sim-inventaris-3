@@ -13,13 +13,20 @@
 
 <body class="font-sans antialiased bg-slate-50 text-slate-600">
 
-    @include('layouts.sidebar')
+    {{-- WRAPPER SIDEBAR: Sembunyikan total saat print --}}
+    <div class="print:hidden">
+        @include('layouts.sidebar')
+    </div>
 
-    <div class="p-4 sm:ml-64 min-h-screen flex flex-col">
+    {{-- MAIN CONTENT WRAPPER --}}
+    {{-- Perhatikan penambahan class: print:ml-0 print:p-0 --}}
+    <div id="main-content"
+        class="p-4 sm:ml-64 min-h-screen flex flex-col print:ml-0 print:p-0 transition-all duration-300">
+
+        {{-- HEADER: Sembunyikan saat print --}}
         <header
-            class="mb-6 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 rounded-xl px-6 py-4 flex justify-between items-center shadow-sm">
+            class="mb-6 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 rounded-xl px-6 py-4 flex justify-between items-center shadow-sm print:hidden">
             <h2 class="font-bold text-2xl text-slate-800 leading-tight tracking-tight">
-                {{-- Menangkap Header dari slot, kalau tidak ada pakai default --}}
                 {{ $header ?? 'SIM Inventaris' }}
             </h2>
             <div class="flex items-center gap-4">
@@ -35,8 +42,9 @@
         </header>
 
         <main class="flex-grow">
+            {{-- ALERTS: Sembunyikan saat print --}}
             @if (session('success'))
-                <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-center gap-3 shadow-sm"
+                <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-center gap-3 shadow-sm print:hidden"
                     role="alert">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -51,7 +59,8 @@
             @endif
 
             @if ($errors->any())
-                <div class="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl shadow-sm" role="alert">
+                <div class="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl shadow-sm print:hidden"
+                    role="alert">
                     <div class="flex items-center gap-3 mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-rose-500" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -68,12 +77,13 @@
                 </div>
             @endif
 
-            <div class="fade-in">
+            <div class="fade-in print:animate-none">
                 {{ $slot }}
             </div>
         </main>
 
-        <footer class="mt-10 py-6 text-center text-xs text-slate-400">
+        {{-- FOOTER: Sembunyikan saat print --}}
+        <footer class="mt-10 py-6 text-center text-xs text-slate-400 print:hidden">
             &copy; {{ date('Y') }} SIM Inventaris. All rights reserved.
         </footer>
     </div>

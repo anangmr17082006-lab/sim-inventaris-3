@@ -8,15 +8,25 @@ use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
-    public function index()
+    public function index(Request $request) // <--- Tambahkan Request $request
     {
-        $rooms = Room::with('unit')->latest()->paginate(10);
+        // Tangkap input search
+        $search = $request->input('search');
+
+        $rooms = Room::with('unit')
+            ->when($search, function ($query, $search) {
+                // Logika pencarian: cari di nama ruangan ATAU lokasi
+                return $query->where('name', 'like', "%{$search}%")
+                             ->orWhere('location', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(10);
+            
         return view('pages.rooms.index', compact('rooms'));
     }
 
     public function create()
     {
-        // Kirim data unit agar bisa dipilih di dropdown
         $units = Unit::where('status', 'aktif')->get(); 
         return view('pages.rooms.create', compact('units'));
     }
@@ -26,7 +36,7 @@ class RoomController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'unit_id' => 'required|exists:units,id', // Validasi relasi
+            'unit_id' => 'required|exists:units,id',
             'status' => 'required|in:tersedia,perbaikan,digunakan',
         ]);
 
@@ -34,34 +44,28 @@ class RoomController extends Controller
         return redirect()->route('ruangan.index')->with('success', 'Ruangan berhasil ditambahkan.');
     }
 
-    // MENAMPILKAN DETAIL ISI RUANGAN
-    public function show(Room $ruangan)
+    // SAYA UBAH $ruangan JADI $room BIAR KONSISTEN
+    public function show(Room $room) 
     {
-        // Ambil Data Aset Tetap di ruangan ini
-        $assets = $ruangan->assets()
-                  ->with(['inventory.category', 'fundingSource']) // Load data induknya
+        $assets = $room->assets()
+                  ->with(['inventory.category', 'fundingSource'])
                   ->latest()
                   ->get();
 
-        // Ambil Data BHP di ruangan ini (yang stoknya masih ada)
-        $consumables = $ruangan->consumables()
+        $consumables = $room->consumables()
                        ->with(['consumable', 'fundingSource'])
                        ->where('current_stock', '>', 0)
                        ->latest()
                        ->get();
 
-        return view('pages.rooms.show', compact('ruangan', 'assets', 'consumables'));
+        // Pass variable sebagai 'ruangan' ke view agar tidak error di blade
+        return view('pages.rooms.show', ['ruangan' => $room, 'assets' => $assets, 'consumables' => $consumables]);
     }
 
-   public function edit($id)
+    // GANTI $id JADI MODEL BINDING BIAR MODERN
+    public function edit(Room $room)
     {
-        // 1. Cari data ruangan berdasarkan ID
-        $room = Room::findOrFail($id);
-        
-        // 2. Ambil data unit untuk dropdown
         $units = Unit::where('status', 'aktif')->get();
-
-        // 3. Kirim ke View dengan nama variabel 'room' (BUKAN 'ruangan')
         return view('pages.rooms.edit', compact('room', 'units'));
     }
 

@@ -1,0 +1,54 @@
+﻿
+   PASS  Tests\Unit\ExampleTest
+  Γ£ô that true is truΓÇª 0.04s  
+
+   PASS  Tests\Feature\Auth\AuthenticationTest
+  Γ£ô login screen canΓÇª 0.80s  
+  Γ£ô users can authenΓÇª 0.13s  
+  Γ£ô users can not auΓÇª 0.27s  
+  Γ£ô users can logout  0.04s  
+
+   PASS  Tests\Feature\Auth\EmailVerificationTest
+  Γ£ô email verificatiΓÇª 0.05s  
+  Γ£ô email can be verΓÇª 0.05s  
+  Γ£ô email is not verΓÇª 0.05s  
+
+   PASS  Tests\Feature\Auth\PasswordConfirmationTest
+  Γ£ô confirm passwordΓÇª 0.06s  
+  Γ£ô password can beΓÇª  0.04s  
+  Γ£ô password is notΓÇª  0.24s  
+
+   PASS  Tests\Feature\Auth\PasswordResetTest
+  Γ£ô reset password lΓÇª 0.05s  
+  Γ£ô reset password lΓÇª 0.25s  
+  Γ£ô reset password sΓÇª 0.27s  
+  Γ£ô password can beΓÇª  0.27s  
+
+   PASS  Tests\Feature\Auth\PasswordUpdateTest
+  Γ£ô password can beΓÇª  0.05s  
+  Γ£ô correct passwordΓÇª 0.04s  
+
+   PASS  Tests\Feature\Auth\RegistrationTest
+  Γ£ô registration scrΓÇª 0.05s  
+  Γ£ô new users can reΓÇª 0.04s  
+
+   FAIL  Tests\Feature\LoanTest
+  Γ£ô Guardrail: TidakΓÇª 0.06s  
+  Γ¿» Guardrail: TidakΓÇª 0.09s  
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeatureΓÇª   
+  Session is missing expected key [errors].
+Failed asserting that false is true.
+
+  at tests\Feature\LoanTest.php:83
+     79Γûò                      ]);
+     80Γûò 
+     81Γûò     // 3. ASSERT
+     82Γûò     // Harusnya gagal dan ada error message (karena validasi di controller)
+  Γ₧£  83Γûò     $response->assertSessionHasErrors();
+     84Γûò });
+
+
+  Tests:    1 failed, 20 passed, [2m7 pending[22m (41 assertions)
+  Duration: 3.43s
+

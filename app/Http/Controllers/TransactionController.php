@@ -4,87 +4,108 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\Consumable;
-use App\Models\ConsumableDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class TransactionController extends Controller
 {
-    // HALAMAN MENU TRANSAKSI
-    public function index()
+    public function index(Request $request)
     {
-        // Tampilkan riwayat transaksi terbaru
-        $transactions = Transaction::with(['detail.consumable', 'user'])
-                        ->latest()
-                        ->paginate(20);
+        // 1. Eager Loading Relasi
+        $query = Transaction::with(['detail.consumable', 'user']);
+
+        // 2. Filter Search (Nama Barang atau Kode Batch)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('detail', function($q) use ($search) {
+                $q->where('batch_code', 'like', "%$search%")
+                  ->orWhereHas('consumable', function($subQ) use ($search) {
+                      $subQ->where('name', 'like', "%$search%");
+                  });
+            });
+        }
+
+        // 3. Filter Jenis (Masuk/Keluar)
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        // 4. Filter Tanggal Start
+        if ($request->filled('start_date')) {
+            $query->whereDate('date', '>=', $request->start_date);
+        }
+
+        // 5. Filter Tanggal End
+        if ($request->filled('end_date')) {
+            $query->whereDate('date', '<=', $request->end_date);
+        }
+
+        // Urutkan dan Paginate
+        $transactions = $query->latest('date')->latest('created_at')->paginate(10);
 
         return view('pages.transactions.index', compact('transactions'));
     }
 
     public function create()
     {
-        // Ambil Consumable (Induk) yang punya setidaknya satu batch dengan stok > 0
+        // Ambil Barang yang punya stok > 0
+        // Kita kirim data 'consumables' (Induk), bukan batch spesifik
         $consumables = Consumable::whereHas('details', function($q) {
             $q->where('current_stock', '>', 0);
-        })->with('details')->get();
+        })->with(['details' => function($q) {
+            $q->where('current_stock', '>', 0);
+        }])->get();
 
         return view('pages.transactions.create', compact('consumables'));
     }
 
-   public function store(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
-            'consumable_id' => 'required|exists:consumables,id', // Validasi ke Induk, bukan batch
+            'consumable_id' => 'required|exists:consumables,id',
             'amount' => 'required|integer|min:1',
             'date' => 'required|date',
-            'notes' => 'required|string',
+            'notes' => 'nullable|string', // Notes boleh kosong, jangan required
         ]);
 
-        // 1. Ambil Barang Induk beserta Batch-nya
-        // PENTING: Urutkan batch berdasarkan tanggal kedatangan (oldest) atau expired (asc)
-        // Disini kita pakai Logika FIFO murni (created_at terlama keluar duluan)
         $item = Consumable::with(['details' => function($q) {
-            $q->where('current_stock', '>', 0)->orderBy('created_at', 'asc');
+            $q->where('current_stock', '>', 0)->orderBy('created_at', 'asc'); // FIFO: Stok lama keluar dulu
         }])->findOrFail($request->consumable_id);
 
-        // 2. Validasi Stok Total
+        // Validasi Stok Total
         $totalAvailable = $item->details->sum('current_stock');
         if ($totalAvailable < $request->amount) {
             return back()->withErrors(['amount' => "Stok tidak cukup! Total tersedia: $totalAvailable, Permintaan: {$request->amount}"]);
         }
 
-        // 3. ALGORITMA FIFO (The Core Logic)
+        // LOGIKA FIFO
         DB::transaction(function () use ($request, $item) {
-            
-            $sisaPermintaan = $request->amount; // Misal butuh 10
+            $sisaPermintaan = $request->amount;
 
             foreach ($item->details as $batch) {
-                // Jika permintaan sudah terpenuhi, stop looping
                 if ($sisaPermintaan <= 0) break;
 
-                // Cek berapa yang bisa diambil dari batch ini
-                // Ambil yang lebih kecil: Sisa Stok Batch atau Sisa Permintaan
+                // Ambil stok dari batch ini
                 $ambil = min($batch->current_stock, $sisaPermintaan);
 
-                // A. Kurangi Stok Batch
+                // 1. Kurangi Stok Batch
                 $batch->decrement('current_stock', $ambil);
 
-                // B. Catat Transaksi per Batch (Agar Audit Trail jelas)
+                // 2. Catat Transaksi
                 Transaction::create([
                     'user_id' => Auth::id(),
-                    'consumable_detail_id' => $batch->id, // ID Batch Spesifik
+                    'consumable_detail_id' => $batch->id,
                     'type' => 'keluar',
                     'amount' => $ambil,
                     'date' => $request->date,
-                    'notes' => $request->notes . " (Auto FIFO)",
+                    'notes' => $request->notes . " (Batch: {$batch->batch_code})", // Catat batch mana yang diambil
                 ]);
 
-                // Kurangi sisa permintaan
                 $sisaPermintaan -= $ambil;
             }
         });
 
-        return redirect()->route('transaksi.index')->with('success', 'Transaksi berhasil. Stok dikurangi menggunakan metode FIFO.');
+        return redirect()->route('transaksi.index')->with('success', 'Transaksi berhasil dicatat (Metode FIFO).');
     }
 }

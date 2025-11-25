@@ -7,9 +7,18 @@ use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $units = Unit::latest()->paginate(10); // Pakai pagination biar rapi
+        $search = $request->input('search');
+
+        // LOGIKA PENCARIAN YANG KAMU LUPAKAN
+        $units = Unit::when($search, function ($query, $search) {
+                return $query->where('name', 'like', "%{$search}%")
+                             ->orWhere('code', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(10);
+
         return view('pages.units.index', compact('units'));
     }
 
@@ -20,7 +29,6 @@ class UnitController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi Ketat
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:10|unique:units,code',
@@ -28,8 +36,13 @@ class UnitController extends Controller
         ]);
 
         Unit::create($request->all());
-
         return redirect()->route('unit.index')->with('success', 'Unit berhasil ditambahkan.');
+    }
+
+    public function show(Unit $unit)
+    {
+        $rooms = $unit->rooms()->orderBy('name')->get();
+        return view('pages.units.show', compact('unit', 'rooms'));
     }
 
     public function edit(Unit $unit)
@@ -41,33 +54,22 @@ class UnitController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:10|unique:units,code,' . $unit->id, // Ignore ID sendiri saat update
+            'code' => 'nullable|string|max:10|unique:units,code,' . $unit->id,
             'status' => 'required|in:aktif,non-aktif',
         ]);
 
         $unit->update($request->all());
-
         return redirect()->route('unit.index')->with('success', 'Unit berhasil diperbarui.');
     }
 
     public function destroy(Unit $unit)
     {
-        // Cek apakah unit masih punya ruangan? Jika ya, jangan hapus sembarangan (Opsional, tapi aman)
+        // Logika defensif kamu saya pertahankan karena ini BENAR
         if ($unit->rooms()->exists()) {
-            return back()->withErrors(['Gagal menghapus! Unit ini masih memiliki Ruangan terdaftar.']);
+            return back()->withErrors(['Gagal menghapus! Unit ini masih memiliki Ruangan terdaftar. Hapus ruangannya dulu.']);
         }
 
         $unit->delete();
         return redirect()->route('unit.index')->with('success', 'Unit berhasil dihapus.');
-    }
-
-    // MENAMPILKAN DETAIL UNIT & DAFTAR RUANGANNYA
-    public function show(Unit $unit)
-    {
-        // Ambil data ruangan milik unit ini
-        // Kita urutkan berdasarkan nama ruangan biar rapi
-        $rooms = $unit->rooms()->orderBy('name')->get();
-
-        return view('pages.units.show', compact('unit', 'rooms'));
     }
 }

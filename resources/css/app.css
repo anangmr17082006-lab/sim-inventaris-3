@@ -24,3 +24,47 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- TAMBAHAN KHUSUS PRINT --- */
+@media print {
+    /* Sembunyikan scrollbar saat print preview */
+    ::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* Paksa background putih bersih */
+    body {
+        background-color: white !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Reset container utama */
+    #main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Pastikan link tidak mencetak URL-nya (default bootstrap/tailwind kadang begini) */
+    a[href]:after {
+        content: none !important;
+    }
+
+    /* Pastikan page break aman untuk tabel */
+    table {
+        page-break-inside: auto;
+    }
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    
+    /* Sembunyikan elemen yang punya class print:hidden (backup kalau tailwind gagal) */
+    .print\:hidden {
+        display: none !important;
+    }
+
+    
+}   
