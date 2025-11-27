@@ -149,6 +149,20 @@
             </x-nav-link>
          </li>
 
+         <li>
+            <x-nav-link :href="route('mutasi.index')" :active="request()->routeIs('mutasi*')"
+               class="flex items-center p-2 rounded-lg group {{ request()->routeIs('mutasi*') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+               <svg
+                  class="w-5 h-5 transition duration-75 {{ request()->routeIs('mutasi*') ? 'text-white' : 'text-slate-400 group-hover:text-white' }}"
+                  aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+               </svg>
+               <span class="ms-3">Mutasi Aset</span>
+            </x-nav-link>
+         </li>
+
          <div class="pt-6 pb-2 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Pengaturan</div>
 
          <li>

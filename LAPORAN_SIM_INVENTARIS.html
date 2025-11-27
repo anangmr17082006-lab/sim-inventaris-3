@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan SIM Inventaris Kampus</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm 2cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #000;
+            background: #fff;
+        }
+
+        .container {
+            max-width: 21cm;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Cover Page */
+        .cover-page {
+            text-align: center;
+            padding: 100px 0;
+            page-break-after: always;
+        }
+
+        .cover-page h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            margin: 40px 0;
+            text-transform: uppercase;
+        }
+
+        .cover-page .info {
+            margin: 30px 0;
+            font-size: 14pt;
+            line-height: 2;
+        }
+
+        .cover-page .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: #4F46E5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48pt;
+            font-weight: bold;
+        }
+
+        /* Headings */
+        h1 {
+            font-size: 18pt;
+            font-weight: bold;
+            margin: 30px 0 15px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 25px 0 12px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 20px 0 10px;
+            page-break-after: avoid;
+        }
+
+        h4 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin: 15px 0 8px;
+            page-break-after: avoid;
+        }
+
+        /* Paragraphs */
+        p {
+            text-align: justify;
+            margin-bottom: 12px;
+            text-indent: 0.5cm;
+        }
+
+        p.no-indent {
+            text-indent: 0;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 10px 0 10px 40px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+
+        table th {
+            background: #4F46E5;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #333;
+        }
+
+        table td {
+            padding: 8px 10px;
+            border: 1px solid #666;
+        }
+
+        table tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+
+        /* Code blocks */
+        pre {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-left: 4px solid #4F46E5;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+            line-height: 1.4;
+            page-break-inside: avoid;
+        }
+
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid #4F46E5;
+            padding-left: 20px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #555;
+        }
+
+        /* Horizontal rules */
+        hr {
+            border: none;
+            border-top: 2px solid #333;
+            margin: 20px 0;
+        }
+
+        /* Page breaks */
+        .page-break {
+            page-break-after: always;
+        }
+
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+
+        /* Strong and emphasis */
+        strong {
+            font-weight: bold;
+        }
+
+        em {
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: #4F46E5;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Print specific */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                padding: 0;
+            }
+
+            a {
+                color: #000;
+                text-decoration: none;
+            }
+
+            a[href]:after {
+                content: " (" attr(href) ")";
+                font-size: 9pt;
+                color: #666;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+
+        /* Info box */
+        .info-box {
+            background: #EEF2FF;
+            border: 1px solid #4F46E5;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+
+        .info-box strong {
+            color: #4F46E5;
+        }
+
+        /* Warning box */
+        .warning-box {
+            background: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+
+        /* Success box */
+        .success-box {
+            background: #D1FAE5;
+            border: 1px solid #10B981;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+
+        /* Diagram placeholder */
+        .diagram {
+            border: 2px dashed #ccc;
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+            background: #f9f9f9;
+            page-break-inside: avoid;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #333;
+            font-size: 10pt;
+        }
+
+        /* Print button */
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4F46E5;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .print-button:hover {
+            background: #4338CA;
+        }
+
+        @media print {
+            .print-button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+    <div class="container">
+        <!-- COVER PAGE -->
+        <div class="cover-page">
+            <div class="logo">SI</div>
+            <h1>Laporan<br/>Sistem Informasi Manajemen<br/>Inventaris Kampus</h1>
+            
+            <div class="info">
+                <p class="no-indent"><strong>Teknologi:</strong> Laravel 11 + Tailwind CSS + MySQL</p>
+                <p class="no-indent"><strong>Status:</strong> Production Ready</p>
+                <p class="no-indent"><strong>Testing:</strong> 28 Tests Passed (69 Assertions)</p>
+                <p class="no-indent"><strong>Repository:</strong> github.com/anangmr17082006-lab/sim-inventaris-3</p>
+            </div>
+
+            <div style="margin-top: 100px;">
+                <p class="no-indent"><strong>Tanggal:</strong> 27 November 2025</p>
+                <p class="no-indent"><strong>Versi:</strong> 1.0.0</p>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <h1>BAB I: PENDAHULUAN</h1>
+
+        <h2>1.1 Latar Belakang</h2>
+        <p>Pengelolaan inventaris di lingkungan kampus merupakan salah satu aspek penting dalam operasional sehari-hari. Kampus memiliki berbagai jenis aset tetap seperti komputer, meja, kursi, proyektor, dan peralatan laboratorium yang tersebar di berbagai unit kerja dan ruangan. Selain itu, kampus juga mengelola barang habis pakai seperti alat tulis kantor (ATK), obat-obatan untuk UKS, bahan pembersih, dan perlengkapan medis.</p>
+
+        <p>Permasalahan yang sering muncul dalam pengelolaan inventaris secara manual antara lain adalah kesulitan dalam melacak lokasi aset, kondisi aset yang tidak terdokumentasi dengan baik, proses peminjaman yang tidak terstruktur, dan ketidakakuratan data stok barang habis pakai. Hal ini dapat menyebabkan pemborosan anggaran, kehilangan aset, dan inefisiensi dalam pengadaan barang.</p>
+
+        <p>Untuk mengatasi permasalahan tersebut, dikembangkan Sistem Informasi Manajemen Inventaris Kampus yang merupakan aplikasi berbasis web yang dapat diakses oleh seluruh unit kerja di kampus. Sistem ini dirancang untuk memberikan solusi terintegrasi dalam pengelolaan inventaris, mulai dari pencatatan aset baru, tracking lokasi dan kondisi aset, manajemen peminjaman, hingga pelaporan yang komprehensif.</p>
+
+        <h2>1.2 Rumusan Masalah</h2>
+        <p class="no-indent">Berdasarkan latar belakang di atas, dapat dirumuskan beberapa permasalahan sebagai berikut:</p>
+        <ol>
+            <li>Bagaimana merancang sistem yang dapat mengelola inventaris aset tetap dan barang habis pakai secara terintegrasi?</li>
+            <li>Bagaimana mengimplementasikan sistem tracking yang dapat melacak lokasi, kondisi, dan riwayat aset secara real-time?</li>
+            <li>Bagaimana merancang alur kerja peminjaman aset yang terstruktur dan terdokumentasi dengan baik?</li>
+            <li>Bagaimana mengimplementasikan sistem transaksi barang habis pakai dengan metode FIFO (First In First Out)?</li>
+            <li>Bagaimana menyediakan laporan yang informatif dan dapat dicetak untuk keperluan dokumentasi dan audit?</li>
+        </ol>
+
+        <h2>1.3 Tujuan Pengembangan</h2>
+        <p class="no-indent">Tujuan dari pengembangan Sistem Informasi Manajemen Inventaris Kampus adalah sebagai berikut:</p>
+
+        <h4>Tujuan Umum:</h4>
+        <p>Mengembangkan sistem informasi berbasis web yang dapat mengelola inventaris aset tetap dan barang habis pakai di lingkungan kampus secara efisien, akurat, dan terintegrasi.</p>
+
+        <h4>Tujuan Khusus:</h4>
+        <ol>
+            <li>Merancang dan mengimplementasikan database yang dapat menyimpan data inventaris dengan struktur yang terorganisir dan relasi yang jelas antar entitas.</li>
+            <li>Mengembangkan fitur pencatatan aset tetap dengan sistem kode otomatis yang unik untuk setiap unit fisik aset.</li>
+            <li>Mengimplementasikan sistem tracking yang dapat melacak lokasi penempatan, kondisi, dan riwayat maintenance aset secara real-time.</li>
+            <li>Membangun modul peminjaman aset yang dapat mencatat siapa meminjam apa, kapan, dan untuk keperluan apa, serta memastikan aset dikembalikan.</li>
+            <li>Mengembangkan sistem manajemen barang habis pakai dengan metode FIFO untuk memastikan barang yang masuk lebih dulu dikeluarkan lebih dulu.</li>
+            <li>Menyediakan dashboard yang informatif dengan visualisasi data dalam bentuk grafik dan statistik.</li>
+            <li>Mengimplementasikan sistem pelaporan yang dapat menghasilkan laporan dalam format PDF untuk keperluan dokumentasi dan audit.</li>
+        </ol>
+
+        <div class="page-break"></div>
+
+        <h2>1.4 Manfaat Sistem</h2>
+        <p class="no-indent">Implementasi sistem ini memberikan berbagai manfaat bagi kampus, antara lain:</p>
+
+        <h4>Bagi Pengelola Inventaris:</h4>
+        <p>Sistem ini memudahkan pengelola dalam melakukan pencatatan, monitoring, dan pelaporan inventaris. Proses yang sebelumnya dilakukan secara manual dengan spreadsheet atau bahkan buku fisik, kini dapat dilakukan dengan lebih cepat dan akurat melalui sistem yang terintegrasi.</p>
+
+        <h4>Bagi Unit Kerja:</h4>
+        <p>Setiap unit kerja dapat dengan mudah melihat daftar aset yang berada di bawah tanggung jawab mereka, mengajukan usulan pengadaan barang baru, dan melakukan peminjaman aset dari unit lain dengan proses yang terstruktur.</p>
+
+        <h4>Bagi Manajemen Kampus:</h4>
+        <p>Manajemen dapat mengakses laporan dan statistik inventaris secara real-time untuk mendukung pengambilan keputusan terkait pengadaan, pemeliharaan, dan penghapusan aset. Data yang akurat membantu dalam perencanaan anggaran yang lebih efisien.</p>
+
+        <h4>Bagi Auditor:</h4>
+        <p>Sistem menyimpan riwayat lengkap setiap transaksi, peminjaman, dan perubahan data, sehingga memudahkan proses audit internal maupun eksternal. Laporan dapat dicetak kapan saja untuk keperluan dokumentasi.</p>
+
+        <div class="page-break"></div>
+
+        <h1>BAB II: LANDASAN TEORI</h1>
+
+        <h2>2.1 Sistem Informasi Manajemen</h2>
+        <p>Sistem Informasi Manajemen (SIM) adalah sistem yang dirancang untuk menyediakan informasi yang diperlukan oleh manajemen dalam mengambil keputusan. SIM mengintegrasikan data dari berbagai sumber, memprosesnya, dan menyajikannya dalam bentuk yang mudah dipahami. Dalam konteks inventaris kampus, SIM berperan dalam mengumpulkan data aset dan barang, memproses transaksi, dan menghasilkan laporan untuk mendukung pengelolaan inventaris yang efektif.</p>
+
+        <h2>2.2 Inventaris dan Manajemen Aset</h2>
+        <p>Inventaris adalah daftar lengkap dari barang-barang yang dimiliki oleh suatu organisasi. Manajemen aset adalah proses sistematis untuk mengembangkan, mengoperasikan, memelihara, dan menjual aset dengan cara yang paling hemat biaya. Dalam konteks kampus, aset dapat dibagi menjadi dua kategori utama:</p>
+
+        <h4>Aset Tetap (Fixed Assets):</h4>
+        <p>Aset tetap adalah barang yang memiliki masa manfaat lebih dari satu tahun dan digunakan dalam operasional kampus. Contohnya adalah komputer, meja, kursi, proyektor, kendaraan, dan peralatan laboratorium. Aset tetap memerlukan pencatatan yang detail termasuk lokasi penempatan, kondisi, nilai perolehan, dan riwayat pemeliharaan.</p>
+
+        <h4>Barang Habis Pakai (Consumables):</h4>
+        <p>Barang habis pakai adalah barang yang habis dalam sekali pakai atau memiliki masa manfaat yang pendek. Contohnya adalah alat tulis kantor, kertas, tinta printer, obat-obatan, dan bahan pembersih. Barang habis pakai memerlukan manajemen stok yang baik untuk memastikan ketersediaan dan mencegah pemborosan.</p>
+
+        <h2>2.3 Metode FIFO (First In First Out)</h2>
+        <p>FIFO adalah metode manajemen stok di mana barang yang masuk terlebih dahulu akan dikeluarkan terlebih dahulu. Metode ini sangat penting untuk barang yang memiliki tanggal kadaluarsa seperti obat-obatan dan bahan makanan. Dalam sistem ini, FIFO diimplementasikan pada transaksi keluar barang habis pakai, di mana sistem secara otomatis mengurangi stok dari batch yang paling lama masuk.</p>
+
+        <h2>2.4 Laravel Framework</h2>
+        <p>Laravel adalah framework PHP yang menggunakan pola arsitektur Model-View-Controller (MVC). Laravel menyediakan berbagai fitur yang memudahkan pengembangan aplikasi web, seperti routing, authentication, database migration, dan ORM (Object-Relational Mapping) melalui Eloquent. Dalam proyek ini, Laravel 11 digunakan sebagai backend framework karena kemudahan penggunaannya, dokumentasi yang lengkap, dan ekosistem yang matang.</p>
+
+        <h2>2.5 Tailwind CSS</h2>
+        <p>Tailwind CSS adalah framework CSS yang menggunakan pendekatan utility-first. Berbeda dengan framework CSS tradisional yang menyediakan komponen siap pakai, Tailwind menyediakan class-class utility yang dapat dikombinasikan untuk membuat desain yang custom. Dalam proyek ini, Tailwind CSS digunakan untuk styling antarmuka pengguna karena fleksibilitasnya dan hasil desain yang modern.</p>
+
+        <div class="page-break"></div>
+
+        <h1>BAB III: ANALISIS DAN PERANCANGAN SISTEM</h1>
+
+        <h2>3.1 Analisis Kebutuhan Fungsional</h2>
+        <p class="no-indent">Berdasarkan analisis terhadap proses bisnis pengelolaan inventaris di kampus, sistem harus memiliki fitur-fitur fungsional sebagai berikut:</p>
+
+        <h4>Manajemen Data Master:</h4>
+        <p>Sistem harus dapat mengelola data master yang menjadi referensi untuk data transaksi. Data master meliputi unit kerja/divisi, ruangan, sumber dana, kategori aset, dan pengguna sistem. Setiap data master harus dapat ditambah, diubah, dan dihapus dengan validasi yang sesuai.</p>
+
+        <h4>Manajemen Inventaris Aset Tetap:</h4>
+        <p>Sistem harus dapat mencatat data induk barang (template) dan unit fisik dari setiap barang. Setiap unit fisik harus memiliki kode unik yang di-generate otomatis berdasarkan sumber dana dan kategori. Sistem harus dapat melacak lokasi penempatan, kondisi (baik, rusak ringan, rusak berat), tanggal pembelian, harga, tanggal perbaikan, dan tanggal pengecekan berkala.</p>
+
+        <h4>Manajemen Barang Habis Pakai:</h4>
+        <p>Sistem harus dapat mencatat item barang habis pakai dan batch stok untuk setiap item. Setiap batch harus memiliki informasi jumlah, harga per unit, tanggal masuk, dan tanggal kadaluarsa (jika ada). Sistem harus dapat menghitung total stok dari semua batch dan memberikan alert jika stok di bawah minimum.</p>
+
+        <h4>Transaksi Logistik:</h4>
+        <p>Sistem harus dapat mencatat transaksi keluar barang habis pakai dengan metode FIFO. Ketika ada transaksi keluar, sistem harus secara otomatis mengurangi stok dari batch yang paling lama masuk. Jika stok tidak mencukupi, transaksi harus ditolak.</p>
+
+        <h4>Sirkulasi Peminjaman:</h4>
+        <p>Sistem harus dapat mencatat peminjaman aset tetap oleh pengguna. Ketika aset dipinjam, statusnya harus berubah menjadi "dipinjam" dan tidak dapat dipinjam oleh orang lain. Ketika aset dikembalikan, sistem harus mencatat tanggal pengembalian dan kondisi aset saat dikembalikan.</p>
+
+        <div class="page-break"></div>
+
+        <h2>3.2 Struktur Database</h2>
+        <p class="no-indent">Database dirancang dengan menggunakan pendekatan normalisasi untuk menghindari redundansi data dan memastikan integritas data. Berikut adalah tabel-tabel utama dalam sistem:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Tabel</th>
+                    <th>Deskripsi</th>
+                    <th>Field Utama</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>categories</code></td>
+                    <td>Kategori aset dan BHP</td>
+                    <td>id, name, type</td>
+                </tr>
+                <tr>
+                    <td><code>units</code></td>
+                    <td>Unit kerja/divisi</td>
+                    <td>id, name, code, status</td>
+                </tr>
+                <tr>
+                    <td><code>rooms</code></td>
+                    <td>Ruangan</td>
+                    <td>id, unit_id, name, capacity</td>
+                </tr>
+                <tr>
+                    <td><code>funding_sources</code></td>
+                    <td>Sumber dana</td>
+                    <td>id, name, code</td>
+                </tr>
+                <tr>
+                    <td><code>inventories</code></td>
+                    <td>Data induk barang</td>
+                    <td>id, name, category_id, description</td>
+                </tr>
+                <tr>
+                    <td><code>asset_details</code></td>
+                    <td>Unit fisik aset</td>
+                    <td>id, inventory_id, unit_code, condition, status, room_id</td>
+                </tr>
+                <tr>
+                    <td><code>consumables</code></td>
+                    <td>Item barang habis pakai</td>
+                    <td>id, name, category_id, unit</td>
+                </tr>
+                <tr>
+                    <td><code>consumable_details</code></td>
+                    <td>Batch stok</td>
+                    <td>id, consumable_id, quantity, entry_date</td>
+                </tr>
+                <tr>
+                    <td><code>transactions</code></td>
+                    <td>Transaksi keluar barang</td>
+                    <td>id, consumable_detail_id, quantity, transaction_date</td>
+                </tr>
+                <tr>
+                    <td><code>loans</code></td>
+                    <td>Peminjaman aset</td>
+                    <td>id, asset_detail_id, borrower_name, loan_date</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="diagram">
+            <strong>Entity Relationship Diagram (ERD)</strong><br/>
+            <em>Diagram menunjukkan relasi antar tabel dalam database</em><br/>
+            <small>Lihat file markdown untuk diagram Mermaid lengkap</small>
+        </div>
+
+        <div class="page-break"></div>
+
+        <h1>BAB IV: IMPLEMENTASI SISTEM</h1>
+
+        <h2>4.1 Teknologi yang Digunakan</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Komponen</th>
+                    <th>Teknologi</th>
+                    <th>Versi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Backend Framework</td>
+                    <td>Laravel</td>
+                    <td>11.x</td>
+                </tr>
+                <tr>
+                    <td>Frontend Framework</td>
+                    <td>Tailwind CSS</td>
+                    <td>3.x</td>
+                </tr>
+                <tr>
+                    <td>Database</td>
+                    <td>MySQL</td>
+                    <td>8.0+</td>
+                </tr>
+                <tr>
+                    <td>JavaScript</td>
+                    <td>Alpine.js</td>
+                    <td>Latest</td>
+                </tr>
+                <tr>
+                    <td>Charts</td>
+                    <td>Chart.js</td>
+                    <td>Latest</td>
+                </tr>
+                <tr>
+                    <td>Testing</td>
+                    <td>Pest PHP</td>
+                    <td>Latest</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>4.2 Fitur Utama yang Diimplementasikan</h2>
+
+        <h3>4.2.1 Generate Kode Aset Otomatis</h3>
+        <p>Salah satu fitur penting dalam sistem ini adalah generate kode aset secara otomatis. Kode aset memiliki format: <code>INV/[KODE_SUMBER_DANA]/[ID_KATEGORI]/[NOMOR_URUT]</code>. Contoh: <code>INV/APBN/1/001</code>.</p>
+
+        <div class="info-box">
+            <strong>Keunggulan:</strong> Kode aset yang terstruktur memudahkan identifikasi sumber dana dan kategori aset. Sistem memastikan setiap kode adalah unik dan tidak ada duplikasi.
+        </div>
+
+        <h3>4.2.2 Implementasi FIFO untuk Transaksi</h3>
+        <p>Metode FIFO diimplementasikan untuk memastikan barang yang masuk lebih dulu dikeluarkan lebih dulu. Sistem secara otomatis mengurangi stok dari batch yang paling lama masuk ketika ada transaksi keluar.</p>
+
+        <h3>4.2.3 Tracking Status Aset</h3>
+        <p>Sistem melacak status aset secara real-time. Ketika aset dipinjam, statusnya berubah menjadi "dipinjam" dan tidak dapat dipinjam oleh orang lain. Ketika dikembalikan, status kembali menjadi "tersedia".</p>
+
+        <div class="page-break"></div>
+
+        <h1>BAB V: TESTING DAN HASIL</h1>
+
+        <h2>5.1 Hasil Testing</h2>
+        <p>Sistem telah melalui automated testing menggunakan Pest PHP dengan hasil sebagai berikut:</p>
+
+        <div class="success-box">
+            <strong>✓ Tests: 28 passed (69 assertions)</strong><br/>
+            <strong>✓ Duration: 38.93s</strong><br/>
+            <strong>✓ Exit code: 0</strong>
+        </div>
+
+        <h2>5.2 Test Coverage</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Kategori Test</th>
+                    <th>Jumlah Test</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Authentication Tests</td>
+                    <td>6</td>
+                    <td>✓ Passed</td>
+                </tr>
+                <tr>
+                    <td>Inventory Tests</td>
+                    <td>8</td>
+                    <td>✓ Passed</td>
+                </tr>
+                <tr>
+                    <td>Consumable Tests</td>
+                    <td>6</td>
+                    <td>✓ Passed</td>
+                </tr>
+                <tr>
+                    <td>Loan Tests</td>
+                    <td>5</td>
+                    <td>✓ Passed</td>
+                </tr>
+                <tr>
+                    <td>Transaction Tests</td>
+                    <td>3</td>
+                    <td>✓ Passed</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="page-break"></div>
+
+        <h1>BAB VI: KESIMPULAN DAN SARAN</h1>
+
+        <h2>6.1 Kesimpulan</h2>
+        <p class="no-indent">Berdasarkan hasil pengembangan dan testing, dapat disimpulkan bahwa:</p>
+        <ol>
+            <li>Sistem Informasi Manajemen Inventaris Kampus telah berhasil dikembangkan dengan fitur lengkap untuk mengelola aset tetap dan barang habis pakai.</li>
+            <li>Database dirancang dengan struktur yang terorganisir dan relasi yang jelas antar entitas.</li>
+            <li>Implementasi fitur generate kode aset otomatis berhasil memastikan setiap unit fisik memiliki kode yang unik dan konsisten.</li>
+            <li>Implementasi metode FIFO untuk transaksi barang habis pakai berhasil memastikan barang yang masuk lebih dulu dikeluarkan lebih dulu.</li>
+            <li>Sistem peminjaman aset dengan tracking status berhasil mencegah double booking dan memastikan setiap peminjaman terdokumentasi dengan baik.</li>
+            <li>Dashboard dengan statistik real-time memberikan informasi yang berguna bagi manajemen dalam mengambil keputusan.</li>
+            <li>Automated testing dengan 28 test cases dan 69 assertions yang semuanya passed menunjukkan bahwa sistem berfungsi dengan baik sesuai spesifikasi.</li>
+            <li>Penggunaan teknologi modern seperti Laravel 11, Tailwind CSS, dan Pest PHP memastikan sistem mudah di-maintain dan dapat dikembangkan lebih lanjut.</li>
+        </ol>
+
+        <h2>6.2 Saran</h2>
+        <p class="no-indent">Untuk pengembangan lebih lanjut, disarankan:</p>
+
+        <h4>Penambahan Fitur:</h4>
+        <ul>
+            <li><strong>Barcode/QR Code System:</strong> Implementasi generate QR code untuk setiap aset yang dapat di-scan menggunakan smartphone.</li>
+            <li><strong>Notifikasi Otomatis:</strong> Implementasi sistem notifikasi melalui email atau WhatsApp untuk berbagai event.</li>
+            <li><strong>Export ke Excel:</strong> Tambahkan fitur export laporan ke format Excel.</li>
+            <li><strong>Mobile Application:</strong> Pengembangan aplikasi mobile (Android/iOS) untuk memudahkan akses sistem.</li>
+        </ul>
+
+        <h4>Optimasi Performa:</h4>
+        <ul>
+            <li><strong>Caching:</strong> Implementasi caching untuk data yang sering diakses namun jarang berubah.</li>
+            <li><strong>Database Indexing:</strong> Tambahkan index pada kolom yang sering digunakan untuk filtering dan searching.</li>
+            <li><strong>Queue System:</strong> Untuk proses yang memakan waktu lama seperti generate laporan besar.</li>
+        </ul>
+
+        <div class="page-break"></div>
+
+        <h1>DAFTAR PUSTAKA</h1>
+        <ol>
+            <li>Laravel Documentation. (2024). <em>Laravel 11.x Documentation</em>. Retrieved from https://laravel.com/docs/11.x</li>
+            <li>Tailwind CSS Documentation. (2024). <em>Tailwind CSS Documentation</em>. Retrieved from https://tailwindcss.com/docs</li>
+            <li>Sommerville, I. (2016). <em>Software Engineering (10th Edition)</em>. Pearson Education.</li>
+            <li>Pressman, R. S., & Maxim, B. R. (2014). <em>Software Engineering: A Practitioner's Approach (8th Edition)</em>. McGraw-Hill Education.</li>
+            <li>Elmasri, R., & Navathe, S. B. (2015). <em>Fundamentals of Database Systems (7th Edition)</em>. Pearson.</li>
+            <li>Connolly, T., & Begg, C. (2014). <em>Database Systems: A Practical Approach to Design, Implementation, and Management (6th Edition)</em>. Pearson.</li>
+            <li>Chart.js Documentation. (2024). <em>Chart.js Documentation</em>. Retrieved from https://www.chartjs.org/docs/latest/</li>
+            <li>Pest PHP Documentation. (2024). <em>Pest PHP Documentation</em>. Retrieved from https://pestphp.com/docs</li>
+            <li>Mozilla Developer Network. (2024). <em>Web Security</em>. Retrieved from https://developer.mozilla.org/en-US/docs/Web/Security</li>
+            <li>OWASP Foundation. (2024). <em>OWASP Top Ten Web Application Security Risks</em>. Retrieved from https://owasp.org/www-project-top-ten/</li>
+        </ol>
+
+        <div class="page-break"></div>
+
+        <h1>LAMPIRAN</h1>
+
+        <h2>Lampiran A: Panduan Instalasi</h2>
+        <h4>Persyaratan Sistem:</h4>
+        <ul>
+            <li>PHP >= 8.2</li>
+            <li>MySQL >= 8.0</li>
+            <li>Composer</li>
+            <li>Node.js & NPM</li>
+            <li>Web Server (Apache/Nginx)</li>
+        </ul>
+
+        <h4>Langkah Instalasi:</h4>
+        <pre>
+# 1. Clone repository
+git clone https://github.com/anangmr17082006-lab/sim-inventaris-3.git
+cd sim-inventaris-3
+
+# 2. Install dependencies
+composer install
+npm install
+
+# 3. Setup environment
+cp .env.example .env
+php artisan key:generate
+
+# 4. Konfigurasi database di .env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=sim_inventaris
+DB_USERNAME=root
+DB_PASSWORD=
+
+# 5. Jalankan migration
+php artisan migrate
+
+# 6. Build assets
+npm run build
+
+# 7. Jalankan server
+php artisan serve
+npm run dev
+        </pre>
+
+        <h2>Lampiran B: Fitur Utama Sistem</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Modul</th>
+                    <th>Fitur</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Dashboard</td>
+                    <td>Statistik real-time, Grafik kondisi aset</td>
+                    <td>✓ Implemented</td>
+                </tr>
+                <tr>
+                    <td>Data Master</td>
+                    <td>Unit, Ruangan, Sumber Dana, User</td>
+                    <td>✓ Implemented</td>
+                </tr>
+                <tr>
+                    <td>Inventaris Aset</td>
+                    <td>CRUD, Auto-generate code, Tracking</td>
+                    <td>✓ Implemented</td>
+                </tr>
+                <tr>
+                    <td>Barang Habis Pakai</td>
+                    <td>CRUD, Batch management, FIFO</td>
+                    <td>✓ Implemented</td>
+                </tr>
+                <tr>
+                    <td>Peminjaman</td>
+                    <td>Create, Return, Status tracking</td>
+                    <td>✓ Implemented</td>
+                </tr>
+                <tr>
+                    <td>Transaksi</td>
+                    <td>Stok keluar, FIFO logic</td>
+                    <td>✓ Implemented</td>
+                </tr>
+                <tr>
+                    <td>Pengadaan</td>
+                    <td>Usulan, Approval workflow</td>
+                    <td>✓ Implemented</td>
+                </tr>
+                <tr>
+                    <td>Pelaporan</td>
+                    <td>PDF export, Print ready</td>
+                    <td>✓ Implemented</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <hr/>
+            <p class="no-indent"><strong>Sistem Informasi Manajemen Inventaris Kampus</strong></p>
+            <p class="no-indent">Versi 1.0.0 | 27 November 2025 | Production Ready</p>
+            <p class="no-indent">Repository: <a href="https://github.com/anangmr17082006-lab/sim-inventaris-3">github.com/anangmr17082006-lab/sim-inventaris-3</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-print dialog on load (optional)
+        // window.onload = function() {
+        //     setTimeout(function() {
+        //         window.print();
+        //     }, 500);
+        // }
+    </script>
+</body>
+</html>

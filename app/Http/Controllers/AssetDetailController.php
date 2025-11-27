@@ -15,17 +15,17 @@ class AssetDetailController extends Controller
     public function index(Request $request, Inventory $inventory)
     {
         // Kita TIDAK BUTUH $rooms dan $fundings di sini lagi karena formnya pindah
-        
+
         $query = $inventory->details()->with(['room', 'fundingSource']);
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('unit_code', 'like', "%$search%")
-                  ->orWhere('model_name', 'like', "%$search%")
-                  ->orWhereHas('room', function($subQ) use ($search) {
-                      $subQ->where('name', 'like', "%$search%");
-                  });
+                    ->orWhere('model_name', 'like', "%$search%")
+                    ->orWhereHas('room', function ($subQ) use ($search) {
+                        $subQ->where('name', 'like', "%$search%");
+                    });
             });
         }
 
@@ -56,6 +56,8 @@ class AssetDetailController extends Controller
             'condition' => 'required',
             'price' => 'nullable|numeric',
             'purchase_date' => 'nullable|date',
+            'repair_date' => 'nullable|date',
+            'check_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 
@@ -82,18 +84,31 @@ class AssetDetailController extends Controller
     }
 
     // ... Method edit, update, destroy biarkan sama
-    public function edit(AssetDetail $assetDetail) {
+    public function edit(AssetDetail $assetDetail)
+    {
         $rooms = Room::orderBy('name')->get();
-        $fundings = FundingSource::orderBy('name')->get();
-        return view('pages.assets.edit', compact('assetDetail', 'rooms', 'fundings'));
+        return view('pages.assets.edit', compact('assetDetail', 'rooms'));
     }
 
-    public function update(Request $request, AssetDetail $assetDetail) {
+    public function update(Request $request, AssetDetail $assetDetail)
+    {
+        $request->validate([
+            'model_name' => 'required|string|max:255',
+            'room_id' => 'required|exists:rooms,id',
+            'condition' => 'required',
+            'price' => 'nullable|numeric',
+            'purchase_date' => 'nullable|date',
+            'repair_date' => 'nullable|date',
+            'check_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
         $assetDetail->update($request->all());
         return redirect()->route('asset.index', $assetDetail->inventory_id)->with('success', 'Update berhasil.');
     }
 
-    public function destroy(AssetDetail $assetDetail) {
+    public function destroy(AssetDetail $assetDetail)
+    {
         $assetDetail->delete();
         return back()->with('success', 'Dihapus.');
     }

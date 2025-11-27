@@ -14,8 +14,9 @@ class InventoryController extends Controller
     {
         // Saya tambahkan withCount agar Kartu Kategori di View menampilkan angka statistik
         // Asumsi: Relasi 'inventories' ada di model Category
-        $categories = Category::withCount(['inventories as total_types', 'assets as total_units'])
-                      ->get();
+        $categories = Category::where('type', 'asset')
+            ->withCount(['inventories as total_types', 'assets as total_units'])
+            ->get();
 
         return view('pages.inventories.categories', compact('categories'));
     }
@@ -28,7 +29,7 @@ class InventoryController extends Controller
         // Query Utama
         $query = Inventory::where('category_id', $category->id)
             ->withCount([
-                'details as total_unit', 
+                'details as total_unit',
                 // Hitung kondisi aset secara efisien
                 'details as baik' => function ($q) {
                     $q->where('condition', 'baik'); // Sesuaikan string jika tidak pakai Enum
@@ -43,9 +44,9 @@ class InventoryController extends Controller
 
         // LOGIKA SEARCH (Ini yang kamu lupakan!)
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -68,7 +69,6 @@ class InventoryController extends Controller
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
-            'brand' => 'nullable|string', // Tambahan field umum
         ]);
 
         $inventory = Inventory::create($request->all());
@@ -82,7 +82,7 @@ class InventoryController extends Controller
     public function edit(Inventory $inventaris)
     {
         // Pakai Route Model Binding yang konsisten
-        $categories = Category::all();
+        $categories = Category::where('type', 'asset')->get();
         return view('pages.inventories.edit', compact('inventaris', 'categories'));
     }
 
@@ -93,7 +93,6 @@ class InventoryController extends Controller
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
-            'brand' => 'nullable|string',
         ]);
 
         $inventaris->update($request->all());

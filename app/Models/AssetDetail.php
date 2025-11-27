@@ -30,4 +30,9 @@ class AssetDetail extends Model
         return $this->status === \App\Enums\AssetStatus::TERSEDIA->value &&
             $this->condition !== \App\Enums\AssetCondition::RUSAK_BERAT->value;
     }
+
+    public function mutations()
+    {
+        return $this->hasMany(Mutation::class, 'asset_id');
+    }
 }

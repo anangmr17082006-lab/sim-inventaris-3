@@ -14,6 +14,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\MutationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,10 +38,10 @@ Route::middleware('auth')->group(function () {
     // ======================================================================
     // 1. DATA MASTER
     // ======================================================================
-    
+
     // Unit Kerja / Divisi
     Route::resource('unit', UnitController::class);
-    
+
     // Ruangan (Paksa parameter jadi {room} agar cocok dengan RoomController)
     Route::resource('ruangan', RoomController::class)->parameters([
         'ruangan' => 'room'
@@ -58,7 +59,7 @@ Route::middleware('auth')->group(function () {
     // ======================================================================
     // 2. INVENTARIS ASET TETAP (Barang Modal)
     // ======================================================================
-    
+
     // Data Induk Barang (Inventory Parent)
     Route::get('/inventaris', [InventoryController::class, 'indexCategories'])->name('inventaris.categories');
     Route::get('/inventaris/kategori/{category}', [InventoryController::class, 'indexItems'])->name('inventaris.items');
@@ -80,7 +81,7 @@ Route::middleware('auth')->group(function () {
     // ======================================================================
     // 3. BARANG HABIS PAKAI (BHP / Consumables)
     // ======================================================================
-    
+
     // Kategori & Item Induk BHP
     Route::get('/bhp', [ConsumableController::class, 'indexCategories'])->name('bhp.categories');
     Route::get('/bhp/kategori/{category}', [ConsumableController::class, 'indexItems'])->name('bhp.items');
@@ -96,7 +97,7 @@ Route::middleware('auth')->group(function () {
     // ======================================================================
     // 4. TRANSAKSI LOGISTIK (Stok Keluar / Mutasi)
     // ======================================================================
-    
+
     Route::get('/transaksi', [TransactionController::class, 'index'])->name('transaksi.index');
     Route::get('/transaksi/keluar', [TransactionController::class, 'create'])->name('transaksi.create');
     Route::post('/transaksi/store', [TransactionController::class, 'store'])->name('transaksi.store');
@@ -105,18 +106,27 @@ Route::middleware('auth')->group(function () {
     // ======================================================================
     // 5. SIRKULASI PEMINJAMAN ASET
     // ======================================================================
-    
+
     Route::get('/peminjaman', [LoanController::class, 'index'])->name('peminjaman.index');
     Route::get('/peminjaman/create', [LoanController::class, 'create'])->name('peminjaman.create');
     Route::post('/peminjaman/store', [LoanController::class, 'store'])->name('peminjaman.store');
     // Route khusus untuk proses pengembalian barang
     Route::put('/peminjaman/return/{loan}', [LoanController::class, 'returnItem'])->name('peminjaman.return');
 
+    // Mutasi Aset
+    Route::get('/mutasi', [MutationController::class, 'index'])->name('mutasi.index');
+    Route::get('/mutasi/create', [MutationController::class, 'create'])->name('mutasi.create');
+    Route::post('/mutasi/store', [MutationController::class, 'store'])->name('mutasi.store');
+    Route::get('/mutasi/{mutation}', [MutationController::class, 'show'])->name('mutasi.show');
+    Route::put('/mutasi/{mutation}/approve', [MutationController::class, 'approve'])->name('mutasi.approve');
+    Route::put('/mutasi/{mutation}/reject', [MutationController::class, 'reject'])->name('mutasi.reject');
+
+
 
     // ======================================================================
     // 6. USULAN PENGADAAN (Procurement)
     // ======================================================================
-    
+
     Route::resource('pengadaan', ProcurementController::class);
     // Route khusus untuk update status (ACC/Tolak) oleh Admin
     Route::put('/pengadaan/{procurement}/status', [ProcurementController::class, 'updateStatus'])->name('pengadaan.updateStatus');
@@ -125,7 +135,7 @@ Route::middleware('auth')->group(function () {
     // ======================================================================
     // 7. PUSAT LAPORAN (Reporting PDF)
     // ======================================================================
-    
+
     Route::get('/laporan', [ReportController::class, 'index'])->name('report.index');
     Route::get('/laporan/aset', [ReportController::class, 'printAsset'])->name('report.asset');
     Route::get('/laporan/stok', [ReportController::class, 'printConsumable'])->name('report.consumable');
@@ -135,7 +145,7 @@ Route::middleware('auth')->group(function () {
     // ======================================================================
     // 8. PROFILE USER (Breeze Default)
     // ======================================================================
-    
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

@@ -16,7 +16,7 @@ class Room extends Model
     }
 
     // --- TAMBAHAN BARU UNTUK REKTOR ---
-    
+
     // 1. Relasi ke Aset Tetap (Laptop, Meja, dll)
     public function assets()
     {
@@ -27,5 +27,16 @@ class Room extends Model
     public function consumables()
     {
         return $this->hasMany(ConsumableDetail::class);
+    }
+
+    // 3. Relasi ke Mutasi (Perpindahan Aset)
+    public function mutationsFrom()
+    {
+        return $this->hasMany(Mutation::class, 'from_room_id');
+    }
+
+    public function mutationsTo()
+    {
+        return $this->hasMany(Mutation::class, 'to_room_id');
     }
 }

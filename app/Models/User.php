@@ -45,4 +45,14 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function requestedMutations()
+    {
+        return $this->hasMany(Mutation::class, 'requested_by');
+    }
+
+    public function approvedMutations()
+    {
+        return $this->hasMany(Mutation::class, 'approved_by');
+    }
 }
