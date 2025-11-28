@@ -15,6 +15,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MutationController;
+use App\Http\Controllers\DisposalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -121,6 +122,15 @@ Route::middleware('auth')->group(function () {
     Route::put('/mutasi/{mutation}/approve', [MutationController::class, 'approve'])->name('mutasi.approve');
     Route::put('/mutasi/{mutation}/reject', [MutationController::class, 'reject'])->name('mutasi.reject');
 
+    // Disposal Aset
+    Route::get('/disposal', [DisposalController::class, 'index'])->name('disposals.index');
+    Route::get('/disposal/create/{assetDetail}', [DisposalController::class, 'create'])->name('disposals.create');
+    Route::post('/disposal/store', [DisposalController::class, 'store'])->name('disposals.store');
+    Route::get('/disposal/{disposal}', [DisposalController::class, 'show'])->name('disposals.show');
+    Route::get('/disposal/{disposal}/review', [DisposalController::class, 'review'])->name('disposals.review');
+    Route::post('/disposal/{disposal}/approve', [DisposalController::class, 'approve'])->name('disposals.approve');
+    Route::post('/disposal/{disposal}/reject', [DisposalController::class, 'reject'])->name('disposals.reject');
+    Route::get('/disposal/report/pdf', [DisposalController::class, 'exportPdf'])->name('disposals.report.pdf');
 
 
     // ======================================================================

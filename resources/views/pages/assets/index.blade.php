@@ -137,7 +137,8 @@
 
                                 <td class="px-6 py-4">
                                     <div class="text-slate-500 text-xs italic max-w-[150px] truncate">
-                                        {{ $unit->notes ?? '-' }}</div>
+                                        {{ $unit->notes ?? '-' }}
+                                    </div>
                                 </td>
 
                                 <td class="px-6 py-4 text-center">
@@ -147,6 +148,23 @@
                                             class="text-amber-500 hover:text-amber-700 font-bold text-xs uppercase tracking-wider transition-colors">
                                             Edit
                                         </a>
+
+                                        {{-- Disposal Button --}}
+                                        @php
+                                            $canDispose = $unit->isDisposable();
+                                        @endphp
+                                        @if($canDispose)
+                                            <a href="{{ route('disposals.create', $unit->id) }}"
+                                                class="text-red-500 hover:text-red-700 font-bold text-xs uppercase tracking-wider transition-colors">
+                                                Disposal
+                                            </a>
+                                        @else
+                                            <span
+                                                class="text-slate-300 font-bold text-xs uppercase tracking-wider cursor-not-allowed"
+                                                title="Aset tidak dapat di-disposal (dipinjam atau ada mutasi pending)">
+                                                Disposal
+                                            </span>
+                                        @endif
 
                                         {{-- Delete Button --}}
                                         <form action="{{ route('asset.destroy', $unit->id) }}" method="POST"

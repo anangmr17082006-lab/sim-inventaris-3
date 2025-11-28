@@ -55,4 +55,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Mutation::class, 'approved_by');
     }
+
+    public function requestedDisposals()
+    {
+        return $this->hasMany(Disposal::class, 'requested_by');
+    }
+
+    public function reviewedDisposals()
+    {
+        return $this->hasMany(Disposal::class, 'reviewed_by');
+    }
 }

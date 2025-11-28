@@ -163,6 +163,31 @@
             </x-nav-link>
          </li>
 
+         <li>
+            <x-nav-link :href="route('disposals.index')" :active="request()->routeIs('disposals*')"
+               class="flex items-center p-2 rounded-lg group {{ request()->routeIs('disposals*') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+               <svg
+                  class="w-5 h-5 transition duration-75 {{ request()->routeIs('disposals*') ? 'text-white' : 'text-slate-400 group-hover:text-white' }}"
+                  aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+               </svg>
+               <span class="ms-3">Disposal Aset</span>
+               @if(auth()->user()->role === 'admin')
+                  @php
+                     $pendingDisposals = \App\Models\Disposal::where('status', 'pending')->count();
+                  @endphp
+                  @if($pendingDisposals > 0)
+                     <span
+                        class="inline-flex items-center justify-center w-5 h-5 ms-auto text-xs font-bold text-white bg-red-500 rounded-full">
+                        {{ $pendingDisposals }}
+                     </span>
+                  @endif
+               @endif
+            </x-nav-link>
+         </li>
+
          <div class="pt-6 pb-2 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Pengaturan</div>
 
          <li>

@@ -5,47 +5,56 @@ namespace App\Http\Controllers;
 use App\Models\AssetDetail;
 use App\Models\ConsumableDetail;
 use App\Models\Loan;
+use App\Models\Mutation;
+use App\Models\Disposal;
+use App\Models\Procurement;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // Import DB Facade
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // --- 1. STATISTIK UTAMA (KARTU ATAS) ---
+        // --- 1. ACTION CENTER (PENDING APPROVALS) ---
+        $pendingMutations = Mutation::where('status', \App\Enums\MutationStatus::PENDING)->count();
+        $pendingDisposals = Disposal::where('status', \App\Enums\DisposalStatus::PENDING)->count();
+        $pendingProcurements = Procurement::where('status', 'pending')->count();
 
-        // Total Nilai Aset (Sum Harga Beli semua aset fisik)
+        // --- 2. FINANCIAL INSIGHTS ---
         $totalAssetValue = AssetDetail::sum('price');
 
-        // Jumlah Barang Sedang Dipinjam
-        $activeLoans = Loan::where('status', 'dipinjam')->count();
-
-        // Jumlah Batch BHP yang Stoknya Menipis (< 5 dan > 0)
-        $lowStockCount = ConsumableDetail::where('current_stock', '<', 5)
-                                         ->where('current_stock', '>', 0)
-                                         ->count();
-
-
-        // --- 2. DATA WARNING (TABEL / LIST) ---
-
-        // Daftar Peminjam yang TELAT (Lewat Jatuh Tempo & Belum Kembali)
-        $lateLoans = Loan::with(['asset.inventory'])
-            ->where('status', 'dipinjam')
-            ->whereDate('return_date_plan', '<', now()) // Tanggal rencana < Hari ini
-            ->take(5) // Ambil 5 saja biar tidak kepanjangan
+        // Asset Value by Category
+        $assetValueByCategory = DB::table('asset_details')
+            ->join('inventories', 'asset_details.inventory_id', '=', 'inventories.id')
+            ->join('categories', 'inventories.category_id', '=', 'categories.id')
+            ->whereNull('asset_details.deleted_at')
+            ->select('categories.name', DB::raw('SUM(asset_details.price) as total_value'))
+            ->groupBy('categories.name')
             ->get();
 
-        // Daftar Barang BHP yang Hampir Kadaluarsa (1 Bulan ke depan)
-        $expiringItems = ConsumableDetail::with('consumable')
-            ->whereNotNull('expiry_date')
-            ->whereDate('expiry_date', '>', now()) // Belum expired
-            ->whereDate('expiry_date', '<=', now()->addDays(30)) // <= 30 hari lagi
-            ->where('current_stock', '>', 0)
-            ->orderBy('expiry_date', 'asc')
+        $chartCategoryLabels = $assetValueByCategory->pluck('name');
+        $chartCategoryValues = $assetValueByCategory->pluck('total_value');
+
+        // --- 3. OPERATIONAL METRICS ---
+        $totalAssets = AssetDetail::count();
+        $activeLoans = Loan::where('status', 'dipinjam')->count();
+        // Avoid division by zero
+        $utilizationRate = $totalAssets > 0 ? round(($activeLoans / $totalAssets) * 100, 1) : 0;
+
+        // --- 4. WARNINGS & ALERTS ---
+
+        // Late Loans
+        $lateLoans = Loan::with(['asset.inventory'])
+            ->where('status', 'dipinjam')
+            ->whereDate('return_date_plan', '<', now())
             ->take(5)
             ->get();
 
-        // Daftar Stok Menipis (Detail List)
+        // Low Stock
+        $lowStockCount = ConsumableDetail::where('current_stock', '<', 5)
+            ->where('current_stock', '>', 0)
+            ->count();
+
         $lowStocks = ConsumableDetail::with('consumable')
             ->where('current_stock', '<', 5)
             ->where('current_stock', '>', 0)
@@ -53,39 +62,42 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // Expiring Items
+        $expiringItems = ConsumableDetail::with('consumable')
+            ->whereNotNull('expiry_date')
+            ->whereDate('expiry_date', '>', now())
+            ->whereDate('expiry_date', '<=', now()->addDays(30))
+            ->where('current_stock', '>', 0)
+            ->orderBy('expiry_date', 'asc')
+            ->take(5)
+            ->get();
 
-        // --- 3. DATA GRAFIK (CHARTS) ---
 
-        // GRAFIK 1: Kondisi Aset (Donut/Pie Chart)
-        // Urutan Array: [Baik, Rusak Ringan, Rusak Berat] - HARUS SESUAI LABEL DI VIEW
-        $chartCondition = [
-            AssetDetail::where('condition', 'baik')->count(),
-            AssetDetail::where('condition', 'rusak_ringan')->count(),
-            AssetDetail::where('condition', 'rusak_berat')->count(),
-        ];
+        // --- 5. CHARTS (EXISTING) ---
 
-        // GRAFIK 2: Tren Peminjaman Bulanan (Line/Area Chart) - Tahun Ini
-        // Kita buat array kosong untuk 12 bulan
+        // Loan Trends
         $chartLoans = [];
         $currentYear = date('Y');
-
-        // Loop bulan 1 sampai 12
         for ($m = 1; $m <= 12; $m++) {
             $count = Loan::whereMonth('loan_date', $m)
-                         ->whereYear('loan_date', $currentYear)
-                         ->count();
+                ->whereYear('loan_date', $currentYear)
+                ->count();
             $chartLoans[] = $count;
         }
 
-        // --- KIRIM SEMUA KE VIEW ---
         return view('dashboard', compact(
+            'pendingMutations',
+            'pendingDisposals',
+            'pendingProcurements',
             'totalAssetValue',
+            'chartCategoryLabels',
+            'chartCategoryValues',
+            'utilizationRate',
             'activeLoans',
             'lowStockCount',
+            'lowStocks',
             'lateLoans',
             'expiringItems',
-            'lowStocks',
-            'chartCondition',
             'chartLoans'
         ));
     }
